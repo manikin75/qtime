@@ -55,17 +55,17 @@ export const TimeReport = () => {
         <div className="flex flex-row items-center justify-center gap-6">
           <Button
             size="sm"
-            className="rounded px-4 py-2"
+            className=""
             onClick={() => changeMonth("left")}
           >
             <CaretLeftIcon />
           </Button>
-          <h2 className="font-bold mb-6">
+          <h2 className="font-bold ">
             {format(new Date(year, month, 1), "MMMM yyyy")}
           </h2>
           <Button
             size="sm"
-            className="rounded px-4 py-2"
+            className=""
             onClick={() => changeMonth("right")}
           >
             <CaretRightIcon />

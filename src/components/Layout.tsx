@@ -11,10 +11,10 @@ const KeyboardShortcut = ({ children }: { children: React.ReactNode }) => {
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-900 text-white w-screen">
-      <header className="flex flex-row items-center justify-center h-10 w-full px-20 text-center ">
+      <header className="flex flex-row gap-x-2 items-center justify-center h-10 w-full px-20 text-center ">
         <ClockIcon size={'1.35em'} weight="bold" />
         <h1 className="text-xl font-bold">
-          Time
+          QTime
         </h1>
       </header>
       <main className="flex flex-col items-center justify-center min-h-[calc(100vh-6em)] px-20 text-center bg-slate-800">

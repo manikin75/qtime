@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@sglara/cn";
 import { format, isToday, isWeekend } from "date-fns";
 import { NumberInput } from "./NumberInput";
 import { useCalendar } from "../hooks/useCalendar";
 import { type Project } from "../types/project";
+import { type NationalHoliday } from "../hooks/useNationalHolidays";
 
 export const Calendar = ({ year, month, projects }: { year: number; month: number, projects: Project[] }) => {
   const [tooltip, setTooltip] = useState<NationalHoliday | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
 
   const {
     inputRefs,
     activeCell,
+    setActiveCell,
     setValue,
     getValue,
     rowSum,
@@ -22,6 +26,7 @@ export const Calendar = ({ year, month, projects }: { year: number; month: numbe
     onSelectExtend,
     onActivate,
     selection,
+    setSelection,
     isMultiSelected,
     nationalHolidays,
     isNationalHoliday
@@ -30,6 +35,12 @@ export const Calendar = ({ year, month, projects }: { year: number; month: numbe
   const showTooltip = (holiday: NationalHoliday | null) => {
     setTooltip(holiday);
   };
+
+  useEffect(() => {
+    const stop = () => setIsDragging(false);
+    window.addEventListener("mouseup", stop);
+    return () => window.removeEventListener("mouseup", stop);
+  }, []);
   
   return (
     <div className="mx-10 my-10 overflow-x-auto">
@@ -91,13 +102,29 @@ export const Calendar = ({ year, month, projects }: { year: number; month: numbe
               <div
                 key={`${project.id}-${date.toISOString()}`}
                 className={cn(
-                  "flex justify-center px-0 rounded-sm border-2 border-transparent ",
+                  "flex justify-center px-0 rounded-sm border-2 border-transparent hover:border-cyan-600 select-none",
                   isSelected(rowIndex, colIndex) && "border-cyan-700! bg-cyan-950",
                   isMultiSelected() && "border-dotted",
                   isNationalHoliday(date) && "bg-slate-900 text-slate-500",
                   isWeekend(date) && "bg-slate-900 text-slate-500",
                   isToday(date) && "bg-cyan-800",
                 )}
+                onMouseDown={() => {
+                  setIsDragging(true);
+                  setSelection({
+                    start: { row: rowIndex, col: colIndex },
+                    end: { row: rowIndex, col: colIndex },
+                  });
+                  setActiveCell({ row: rowIndex, col: colIndex });
+                }}
+                onMouseEnter={() => {
+                  if (!isDragging || !selection) return;
+                  setSelection((prev) =>
+                    prev
+                      ? { ...prev, end: { row: rowIndex, col: colIndex } }
+                      : null
+                  );
+                }}
               >
                 <NumberInput
                   ref={(el) => {
@@ -136,20 +163,19 @@ export const Calendar = ({ year, month, projects }: { year: number; month: numbe
             <div
               key={`sum-${date.toISOString()}`}
               className={[
-                "text-center font-semibold  px-3 border-t border-slate-600 mt-2",
+                "text-center font-semibold  px-2 border-t border-slate-600 mt-2",
                 sum === 0 ? "text-slate-600" : sum >= 8 ? "text-green-600" : "text-yellow-600",
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              {sum}
+              {sum || '-'}
             </div>
           );
         })}
 
         <div />
       </div>
-      {JSON.stringify(selection)}
     </div>
   );
 };

@@ -52,11 +52,29 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
     };
   }, [year, getForYear]);
 
-  // hjälpfunktion
+  // Helpers
   const isNationalHoliday = (date: Date) => {
     const d = format(date, "yyyy-MM-dd");
     return nationalHolidays.some((h) => h.date === d);
   };
+
+  const forEachSelectedCell = (
+    cb: (row: number, col: number) => void
+  ) => {
+    if (!selection) return;
+
+    const r1 = Math.min(selection.start.row, selection.end.row);
+    const r2 = Math.max(selection.start.row, selection.end.row);
+    const c1 = Math.min(selection.start.col, selection.end.col);
+    const c2 = Math.max(selection.start.col, selection.end.col);
+
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        cb(r, c);
+      }
+    }
+  };
+
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -110,24 +128,22 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
         return false;
       }
 
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (!selection && !activeCell) return;
+        e.preventDefault();
+
+        forEachSelectedCell((r, c) => {
+          setValue(projects[r].id, daysInMonth[c], 0);
+        });
+      }
+
       if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.match(/^[0-9]$/)) {
         const value = parseInt(e.key);
         if (!activeCell || !selection || !isMultiSelected()) return;
 
-        const r1 = Math.min(selection.start.row, selection.end.row);
-        const r2 = Math.max(selection.start.row, selection.end.row);
-        const c1 = Math.min(selection.start.col, selection.end.col);
-        const c2 = Math.max(selection.start.col, selection.end.col);
-
-        for (let r = r1; r <= r2; r++) {
-          const row: number[] = [];
-          for (let c = c1; c <= c2; c++) {
-            if (activeCell.row === r && activeCell.col === c) continue;
-            row.push(
-              setValue(projects[r].id, daysInMonth[c], value)
-            );
-          }
-        }
+        forEachSelectedCell((r, c) => {
+          setValue(projects[r].id, daysInMonth[c], value);
+        });
       }
 
     };
