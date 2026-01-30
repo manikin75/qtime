@@ -1,0 +1,150 @@
+{
+  "country": {
+    "code": "SE",
+    "code3": "SWE",
+    "name": "Sweden"
+  },
+  "year": 2028,
+  "holidays": [
+    {
+      "date": "2028-01-01",
+      "name": "New Year's Day",
+      "local_name": "Nyårsdagen",
+      "type": "national",
+      "observed_date": "2028-01-01",
+      "is_observed_shifted": false,
+      "description": "First day of the new year"
+    },
+    {
+      "date": "2028-01-06",
+      "name": "Epiphany",
+      "local_name": "Trettondedag jul",
+      "type": "national",
+      "observed_date": "2028-01-06",
+      "is_observed_shifted": false,
+      "description": "Christian holiday commemorating the visit of the Magi"
+    },
+    {
+      "date": "2028-04-14",
+      "name": "Good Friday",
+      "local_name": "Långfredagen",
+      "type": "national",
+      "observed_date": "2028-04-14",
+      "is_observed_shifted": false,
+      "description": "Christian holiday commemorating the crucifixion of Jesus"
+    },
+    {
+      "date": "2028-04-16",
+      "name": "Easter Sunday",
+      "local_name": "Påskdagen",
+      "type": "national",
+      "observed_date": "2028-04-16",
+      "is_observed_shifted": false,
+      "description": "Christian holiday celebrating the resurrection of Jesus"
+    },
+    {
+      "date": "2028-04-17",
+      "name": "Easter Monday",
+      "local_name": "Annandag påsk",
+      "type": "national",
+      "observed_date": "2028-04-17",
+      "is_observed_shifted": false,
+      "description": "Day after Easter Sunday"
+    },
+    {
+      "date": "2028-05-01",
+      "name": "Labour Day",
+      "local_name": "Första maj",
+      "type": "national",
+      "observed_date": "2028-05-01",
+      "is_observed_shifted": false,
+      "description": "International Workers' Day"
+    },
+    {
+      "date": "2028-05-25",
+      "name": "Ascension Day",
+      "local_name": "Kristi himmelsfärds dag",
+      "type": "national",
+      "observed_date": "2028-05-25",
+      "is_observed_shifted": false,
+      "description": "Christian holiday commemorating the ascension of Jesus, 39 days after Easter"
+    },
+    {
+      "date": "2028-06-04",
+      "name": "Whit Sunday",
+      "local_name": "Pingstdagen",
+      "type": "national",
+      "observed_date": "2028-06-04",
+      "is_observed_shifted": false,
+      "description": "Christian holiday commemorating the descent of the Holy Spirit, 49 days after Easter"
+    },
+    {
+      "date": "2028-06-06",
+      "name": "National Day",
+      "local_name": "Nationaldagen",
+      "type": "national",
+      "observed_date": "2028-06-06",
+      "is_observed_shifted": false,
+      "description": "Swedish National Day, public holiday since 2005"
+    },
+    {
+      "date": "2028-06-24",
+      "name": "Midsummer Day",
+      "local_name": "Midsommardagen",
+      "type": "national",
+      "observed_date": "2028-06-24",
+      "is_observed_shifted": false,
+      "description": "Celebration of the summer solstice, always a Saturday between June 20-26"
+    },
+    {
+      "date": "2028-11-04",
+      "name": "All Saints' Day",
+      "local_name": "Alla helgons dag",
+      "type": "national",
+      "observed_date": "2028-11-04",
+      "is_observed_shifted": false,
+      "description": "Day to honor all saints, always a Saturday between October 31 and November 6"
+    },
+    {
+      "date": "2028-12-24",
+      "name": "Christmas Eve",
+      "local_name": "Julafton",
+      "type": "bank",
+      "observed_date": "2028-12-24",
+      "is_observed_shifted": false,
+      "description": "De facto holiday, main Christmas celebration day in Sweden"
+    },
+    {
+      "date": "2028-12-25",
+      "name": "Christmas Day",
+      "local_name": "Juldagen",
+      "type": "national",
+      "observed_date": "2028-12-25",
+      "is_observed_shifted": false,
+      "description": "Christian holiday celebrating the birth of Jesus"
+    },
+    {
+      "date": "2028-12-26",
+      "name": "Boxing Day",
+      "local_name": "Annandag jul",
+      "type": "national",
+      "observed_date": "2028-12-26",
+      "is_observed_shifted": false,
+      "description": "Second day of Christmas"
+    },
+    {
+      "date": "2028-12-31",
+      "name": "New Year's Eve",
+      "local_name": "Nyårsafton",
+      "type": "bank",
+      "observed_date": "2028-12-31",
+      "is_observed_shifted": false,
+      "description": "De facto holiday, last day of the year"
+    }
+  ],
+  "metadata": {
+    "generated_at": "2026-01-25T15:54:32.429Z",
+    "total_holidays": 15,
+    "disclaimer": "This data is provided for informational purposes only. While we strive for accuracy, holiday dates and observance rules can change. Please verify critical dates with official government sources. Tallyfy accepts no liability for any errors or decisions made based on this data."
+  }
+}

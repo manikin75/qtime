@@ -1,0 +1,22 @@
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  /* display: none; <- Crashes Chrome on hover */
+  -webkit-appearance: none;
+  margin: 0;
+  /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  /* Firefox */
+
+  text-align: center;
+}
+
+input[type=number]:focus {
+  outline: none;
+}
+
+input[type=number]::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+}
