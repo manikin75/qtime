@@ -1,21 +1,33 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import { useNationalHolidays, type NationalHoliday } from "./useNationalHolidays";
-import { format } from "date-fns";
-import { type Project } from "../types/project";
+import { useEffect, useMemo, useState, useRef } from 'react';
+import {
+  useNationalHolidays,
+  type NationalHoliday,
+} from './useNationalHolidays';
+import { format } from 'date-fns';
+import { type Project } from '../types/project';
 
 type CellKey = `${string}_${string}`; // projectId_date
 type CellPos = {
   row: number;
   col: number;
 };
-type Direction = "up" | "down" | "left" | "right";
+type Direction = 'up' | 'down' | 'left' | 'right';
 
-
-export const useCalendar = ({ year, month, projects }: { year: number; month: number, projects: Project[] }) => {
+export const useCalendar = ({
+  year,
+  month,
+  projects,
+}: {
+  year: number;
+  month: number;
+  projects: Project[];
+}) => {
   const { getForYear } = useNationalHolidays();
   const [values, setValues] = useState<Record<CellKey, number>>({});
   const [activeCell, setActiveCell] = useState<CellPos | null>(null);
-  const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>([]);
+  const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
+    [],
+  );
   const [selection, setSelection] = useState<{
     start: CellPos;
     end: CellPos;
@@ -26,7 +38,6 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
   >([]);
   const clipboardRef = useRef<number[][]>([]);
 
-  
   const daysInMonth = useMemo(() => {
     const days: Date[] = [];
 
@@ -54,13 +65,11 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
 
   // Helpers
   const isNationalHoliday = (date: Date) => {
-    const d = format(date, "yyyy-MM-dd");
+    const d = format(date, 'yyyy-MM-dd');
     return nationalHolidays.some((h) => h.date === d);
   };
 
-  const forEachSelectedCell = (
-    cb: (row: number, col: number) => void
-  ) => {
+  const forEachSelectedCell = (cb: (row: number, col: number) => void) => {
     if (!selection) return;
 
     const r1 = Math.min(selection.start.row, selection.end.row);
@@ -75,11 +84,10 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
     }
   };
 
-
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       setShiftKey(e.shiftKey);
-      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         if (!selection) return;
 
         const r1 = Math.min(selection.start.row, selection.end.row);
@@ -92,14 +100,12 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
         for (let r = r1; r <= r2; r++) {
           const row: number[] = [];
           for (let c = c1; c <= c2; c++) {
-            row.push(
-              getValue(projects[r].id, daysInMonth[c])
-            );
+            row.push(getValue(projects[r].id, daysInMonth[c]));
           }
           clipboardRef.current.push(row);
         }
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         if (!activeCell) return;
 
         const data = clipboardRef.current;
@@ -113,22 +119,15 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
             const r = activeCell.row + rOffset;
             const c = activeCell.col + cOffset;
 
-            if (
-              r < projects.length &&
-              c < daysInMonth.length
-            ) {
-              setValue(
-                projects[r].id,
-                daysInMonth[c],
-                value
-              );
+            if (r < projects.length && c < daysInMonth.length) {
+              setValue(projects[r].id, daysInMonth[c], value);
             }
           });
         });
         return false;
       }
 
-      if (e.key === "Delete" || e.key === "Backspace") {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
         if (!selection && !activeCell) return;
         e.preventDefault();
 
@@ -145,7 +144,6 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
           setValue(projects[r].id, daysInMonth[c], value);
         });
       }
-
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -155,17 +153,17 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
     };
   }, [selection, daysInMonth, projects]);
 
   useEffect(() => {
     if (!clipboardRef.current) return;
-    console.log(clipboardRef.current );
+    console.log(clipboardRef.current);
   }, [clipboardRef.current]);
 
   useEffect(() => {
@@ -181,16 +179,10 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
     values[`${projectId}_${date.toDateString()}`] ?? 0;
 
   const rowSum = (projectId: string) =>
-    daysInMonth.reduce(
-      (sum, d) => sum + getValue(projectId, d),
-      0
-    );
+    daysInMonth.reduce((sum, d) => sum + getValue(projectId, d), 0);
 
   const columnSum = (date: Date) =>
-    projects.reduce(
-      (sum, p) => sum + getValue(p.id, date),
-      0
-    );
+    projects.reduce((sum, p) => sum + getValue(p.id, date), 0);
 
   const isSelected = (row: number, col: number) => {
     if (!selection) return false;
@@ -205,9 +197,11 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
 
   const isMultiSelected = () => {
     if (!selection) return false;
-    return selection.start.row !== selection.end.row || selection.start.col !== selection.end.col;
+    return (
+      selection.start.row !== selection.end.row ||
+      selection.start.col !== selection.end.col
+    );
   };
-
 
   const onFocus = (rowIndex: number, colIndex: number) => {
     setActiveCell({ row: rowIndex, col: colIndex });
@@ -261,7 +255,7 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
         : {
             start: next,
             end: next,
-          }
+          },
     );
 
     inputRefs.current[next.row]?.[next.col]?.focus();
@@ -277,7 +271,8 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
 
   return {
     inputRefs,
-    activeCell, setActiveCell,
+    activeCell,
+    setActiveCell,
     setValue,
     getValue,
     rowSum,
@@ -292,6 +287,6 @@ export const useCalendar = ({ year, month, projects }: { year: number; month: nu
     setSelection,
     isMultiSelected,
     nationalHolidays,
-    isNationalHoliday
+    isNationalHoliday,
   };
-}
+};

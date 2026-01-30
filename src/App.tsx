@@ -3,19 +3,18 @@ import {
   Route,
   BrowserRouter as Router,
   Routes,
-} from "react-router-dom";
+} from 'react-router-dom';
 import { TimeReport } from './pages/TimeReport';
-import './dist.css'
+import './dist.css';
 
 function App() {
   return (
-        <Router>
-          <Routes>
-            <Route path={"/"} element={<TimeReport />} />
-          </Routes>
-        </Router>
-
+    <Router>
+      <Routes>
+        <Route path={'/'} element={<TimeReport />} />
+      </Routes>
+    </Router>
   );
 }
 
-export default App
+export default App;

@@ -1,11 +1,11 @@
 // Data from https://tallyfy.com/national-holidays/
-import { useRef, useCallback } from "react";
+import { useRef, useCallback } from 'react';
 
 export type NationalHoliday = {
   date: string;
   name: string;
   local_name: string;
-  type: "national" | "bank";
+  type: 'national' | 'bank';
   observed_date: string;
   is_observed_shifted: boolean;
   description: string;
@@ -41,4 +41,3 @@ export const useNationalHolidays = () => {
 
   return { getForYear };
 };
-
