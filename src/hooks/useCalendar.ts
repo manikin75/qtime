@@ -4,14 +4,15 @@ import {
   type NationalHoliday,
 } from './useNationalHolidays';
 import { format } from 'date-fns';
+import { atomWithStorage } from 'jotai/utils';
+import { useAtom } from 'jotai';
 import { type Project } from '../types/project';
+import type { Change, CellKey, CellPos, Direction } from '../types/cells';
 
-type CellKey = `${string}_${string}`; // projectId_date
-type CellPos = {
-  row: number;
-  col: number;
-};
-type Direction = 'up' | 'down' | 'left' | 'right';
+const CellValueAtom = atomWithStorage<Record<CellKey, number>>(
+  'cellValues',
+  {},
+);
 
 export const useCalendar = ({
   year,
@@ -23,7 +24,7 @@ export const useCalendar = ({
   projects: Project[];
 }) => {
   const { getForYear } = useNationalHolidays();
-  const [values, setValues] = useState<Record<CellKey, number>>({});
+  const [values, setValues] = useAtom(CellValueAtom);
   const [activeCell, setActiveCell] = useState<CellPos | null>(null);
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
     [],
@@ -37,6 +38,21 @@ export const useCalendar = ({
     HTMLInputElement[][] // [row][col]
   >([]);
   const clipboardRef = useRef<number[][]>([]);
+
+  const undoStack = useRef<Change[][]>([]);
+  const redoStack = useRef<Change[][]>([]);
+
+  // Stack handling (undo/redo)
+  const applyChanges = (changes: Change[]) => {
+    changes.forEach(({ row, col, next }) => {
+      setValue(projects[row].id, daysInMonth[col], next);
+    });
+  };
+
+  const recordChanges = (changes: Change[]) => {
+    undoStack.current.push(changes);
+    redoStack.current = [];
+  };
 
   const daysInMonth = useMemo(() => {
     const days: Date[] = [];
@@ -114,16 +130,25 @@ export const useCalendar = ({
         e.preventDefault();
         e.stopPropagation();
 
+        const changes: Change[] = [];
         data.forEach((row, rOffset) => {
           row.forEach((value, cOffset) => {
             const r = activeCell.row + rOffset;
             const c = activeCell.col + cOffset;
 
             if (r < projects.length && c < daysInMonth.length) {
-              setValue(projects[r].id, daysInMonth[c], value);
+              // setValue(projects[r].id, daysInMonth[c], value);
+              changes.push({
+                row: r,
+                col: c,
+                prev: getValue(projects[r].id, daysInMonth[c]),
+                next: value,
+              });
             }
           });
         });
+        applyChanges(changes);
+        recordChanges(changes);
         return false;
       }
 
@@ -131,18 +156,51 @@ export const useCalendar = ({
         if (!selection && !activeCell) return;
         e.preventDefault();
 
+        const changes: Change[] = [];
         forEachSelectedCell((r, c) => {
-          setValue(projects[r].id, daysInMonth[c], 0);
+          // setValue(projects[r].id, daysInMonth[c], 0);
+          changes.push({
+            row: r,
+            col: c,
+            prev: getValue(projects[r].id, daysInMonth[c]),
+            next: 0,
+          });
         });
+        applyChanges(changes);
+        recordChanges(changes);
       }
 
       if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.match(/^[0-9]$/)) {
         const value = parseInt(e.key);
-        if (!activeCell || !selection || !isMultiSelected()) return;
+        if (!activeCell || !selection || !isMultiSelected() || value > 9)
+          return;
+        e.preventDefault();
 
+        const changes: Change[] = [];
         forEachSelectedCell((r, c) => {
-          setValue(projects[r].id, daysInMonth[c], value);
+          // setValue(projects[r].id, daysInMonth[c], value);
+          changes.push({
+            row: r,
+            col: c,
+            prev: getValue(projects[r].id, daysInMonth[c]),
+            next: value,
+          });
         });
+        applyChanges(changes);
+        recordChanges(changes);
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+
+        const last = undoStack.current.pop();
+        if (!last) return;
+
+        last.forEach(({ row, col, prev }) => {
+          setValue(projects[row].id, daysInMonth[col], prev);
+        });
+
+        redoStack.current.push(last);
       }
     };
 
@@ -165,10 +223,6 @@ export const useCalendar = ({
     if (!clipboardRef.current) return;
     console.log(clipboardRef.current);
   }, [clipboardRef.current]);
-
-  useEffect(() => {
-    console.log({ shiftKey, selection });
-  }, [shiftKey, selection]);
 
   const setValue = (projectId: string, date: Date, value: number) => {
     const key: CellKey = `${projectId}_${date.toDateString()}`;

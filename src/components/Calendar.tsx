@@ -88,7 +88,7 @@ export const Calendar = ({
           </div>
         ))}
 
-        <div className="font-semibold text-right pr-2 mt-6">Σ</div>
+        <div className="font-semibold text-right pr-2 mt-6  opacity-70">Σ</div>
 
         {/* ===== Project rows ===== */}
         {projects.map((project, rowIndex) => (
@@ -97,11 +97,17 @@ export const Calendar = ({
             <div
               key={project.id}
               className={cn(
-                'sticky left-0 bg-cyan-950 z-10 flex items-center font-medium rounded-sm ps-2',
+                'sticky left-0 bg-cyan-950 z-10 flex-col flex items-start font-medium rounded-sm ps-2',
                 activeCell?.row === rowIndex && 'bg-cyan-800',
               )}
             >
               {project.name}
+              <div
+                className="bg-cyan-600 h-[1px] inline-block"
+                style={{
+                  width: `${(100 * rowSum(project.id)) / 172}%`,
+                }}
+              />
             </div>
 
             {/* Cells */}
@@ -160,7 +166,9 @@ export const Calendar = ({
         ))}
 
         {/* ===== Column sums ===== */}
-        <div className="sticky left-0 z-10 font-semibold mt-2">Σ</div>
+        <div className="sticky left-0 z-10 font-semibold mt-2 text-right pe-2 opacity-70">
+          Σ
+        </div>
 
         {daysInMonth.map((date) => {
           const sum = columnSum(date);

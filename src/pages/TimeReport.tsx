@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Calendar } from '../components/Calendar';
 import { Button } from '../components/Button';
+import { PlusIcon, PokerChipIcon } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { type Project } from '../types/project';
@@ -47,18 +48,42 @@ export const TimeReport = () => {
     }
   };
 
+  const addProject = () => {
+    setProjects((p) => [
+      ...p,
+      { id: p.length.toString(), name: `New project`, description: '' },
+    ]);
+  };
+
   return (
     <Layout>
       <div className="mt-10 flex flex-col items-center justify-start h-full">
-        <div className="flex flex-row items-center justify-center gap-6">
-          <Button size="sm" className="" onClick={() => changeMonth('left')}>
-            <CaretLeftIcon />
+        <div className="flex flex-row justify-between w-full">
+          <Button
+            size="sm"
+            className="flex items-center justify-center"
+            onClick={addProject}
+          >
+            <PlusIcon />
+            Add Project
           </Button>
-          <h2 className="font-bold ">
-            {format(new Date(year, month, 1), 'MMMM yyyy')}
-          </h2>
-          <Button size="sm" className="" onClick={() => changeMonth('right')}>
-            <CaretRightIcon />
+          <div className="flex flex-row items-center justify-center gap-6">
+            <Button size="sm" className="" onClick={() => changeMonth('left')}>
+              <CaretLeftIcon />
+            </Button>
+            <h2 className="font-bold ">
+              {format(new Date(year, month, 1), 'MMMM yyyy')}
+            </h2>
+            <Button size="sm" className="" onClick={() => changeMonth('right')}>
+              <CaretRightIcon />
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            className="flex items-center justify-center gap-x-1"
+          >
+            <PokerChipIcon />
+            Edit token
           </Button>
         </div>
 
