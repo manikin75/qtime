@@ -78,7 +78,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          'focus:outline-none focus:ring-2 focus:ring-cyan-600',
+          'focus:outline-none focus:ring-2 focus:ring-transparent',
           className,
         )}
       />

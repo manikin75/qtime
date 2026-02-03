@@ -16,10 +16,10 @@ export const Button = ({
   return (
     <button
       className={cn(
-        'bg-cyan-800 border border-cyan-600 hover:bg-cyan-600 hover:cursor-pointer text-white rounded ',
-        size === 'sm' && 'px-2 py-1 text-sm',
-        size === 'md' && 'px-4 py-2',
-        size === 'lg' && 'px-6 py-3',
+        'bg-transparent border border-white hover:bg-stone-700 hover:cursor-pointer text-white rounded-lg ',
+        size === 'sm' && 'px-2 py-2 text-sm',
+        size === 'md' && 'px-6 py-3',
+        size === 'lg' && 'px-8 py-4',
         className,
       )}
       // style={{backgroundColor: '#469'}}

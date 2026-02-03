@@ -238,6 +238,8 @@ export const useCalendar = ({
   const columnSum = (date: Date) =>
     projects.reduce((sum, p) => sum + getValue(p.id, date), 0);
 
+  const totalSum = () => projects.reduce((sum, p) => sum + rowSum(p.id), 0);
+
   const isSelected = (row: number, col: number) => {
     if (!selection) return false;
 
@@ -331,6 +333,7 @@ export const useCalendar = ({
     getValue,
     rowSum,
     columnSum,
+    totalSum,
     isSelected,
     daysInMonth,
     onFocus,

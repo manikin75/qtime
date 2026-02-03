@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Calendar } from '../components/Calendar';
 import { Button } from '../components/Button';
+import { EditTokenDialog } from '../components/EditTokenDialog';
 import { PlusIcon, PokerChipIcon } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
@@ -29,6 +30,7 @@ export const TimeReport = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const [projects, setProjects] = useState<Project[]>(defaultProjects);
+  const [editTokenDialogOpen, setEditTokenDialogOpen] = useState(false);
 
   const changeMonth = (dir: 'left' | 'right') => {
     if (dir === 'left') {
@@ -57,7 +59,7 @@ export const TimeReport = () => {
 
   return (
     <Layout>
-      <div className="mt-10 flex flex-col items-center justify-start h-full">
+      <div className="mb-10 mt-4 flex flex-col items-center justify-start h-full">
         <div className="flex flex-row justify-between w-full">
           <Button
             size="sm"
@@ -81,6 +83,7 @@ export const TimeReport = () => {
           <Button
             size="sm"
             className="flex items-center justify-center gap-x-1"
+            onClick={() => setEditTokenDialogOpen(true)}
           >
             <PokerChipIcon />
             Edit token
@@ -89,6 +92,10 @@ export const TimeReport = () => {
 
         <Calendar year={year} month={month} projects={projects} />
       </div>
+      <EditTokenDialog
+        open={editTokenDialogOpen}
+        onOpenChange={setEditTokenDialogOpen}
+      />
     </Layout>
   );
 };

@@ -26,6 +26,7 @@ export const Calendar = ({
     getValue,
     rowSum,
     columnSum,
+    totalSum,
     isSelected,
     daysInMonth,
     onFocus,
@@ -54,24 +55,24 @@ export const Calendar = ({
   }, []);
 
   return (
-    <div className="mx-10 my-10 overflow-x-auto">
+    <div className="my-10 overflow-x-auto w-full">
       <div
-        className="grid gap-1 text-sm"
+        className="grid gap-1 text-sm w-full"
         style={{
-          gridTemplateColumns: `200px repeat(${daysInMonth.length}, 28px) 64px`,
+          gridTemplateColumns: `200px repeat(${daysInMonth.length}, 28px) auto`,
         }}
       >
         {/* ===== Header row ===== */}
-        <div className="sticky left-0  z-20" />
+        <div className="sticky left-0 z-20" />
 
         {daysInMonth.map((date) => (
           <div
             key={date.toISOString()}
             className={cn(
-              'flex flex-col items-center px-4 gap-1 mb-2 border-b border-slate-600 py-1 relative',
+              'flex flex-col items-center px-4 gap-1 mb-2 border-b border-stone-600 py-1 relative',
               isNationalHoliday(date) && 'text-red-500 cursor-pointer',
               isWeekend(date) && 'text-red-500',
-              isToday(date) && 'bg-cyan-700 rounded',
+              isToday(date) && 'bg-stone-700 rounded',
             )}
             onMouseEnter={() =>
               isNationalHoliday(date) ? showTooltip(date) : null
@@ -88,7 +89,9 @@ export const Calendar = ({
           </div>
         ))}
 
-        <div className="font-semibold text-right pr-2 mt-6  opacity-70">Σ</div>
+        <div className="font-semibold text-right pr-2 mt-6 ms-6 me-1 opacity-70">
+          Σ
+        </div>
 
         {/* ===== Project rows ===== */}
         {projects.map((project, rowIndex) => (
@@ -97,13 +100,13 @@ export const Calendar = ({
             <div
               key={project.id}
               className={cn(
-                'sticky left-0 bg-cyan-950 z-10 flex-col flex items-start font-medium rounded-sm ps-2',
-                activeCell?.row === rowIndex && 'bg-cyan-800',
+                'sticky left-0 z-10 flex-col flex items-start font-medium rounded-sm ps-2',
+                activeCell?.row === rowIndex && 'bg-stone-700',
               )}
             >
               {project.name}
               <div
-                className="bg-cyan-600 h-[1px] inline-block"
+                className="bg-white/40 h-[1px] inline-block"
                 style={{
                   width: `${(100 * rowSum(project.id)) / 172}%`,
                 }}
@@ -115,14 +118,18 @@ export const Calendar = ({
               <div
                 key={`${project.id}-${date.toISOString()}`}
                 className={cn(
-                  'flex justify-center px-0 rounded-sm border-2 border-transparent hover:border-cyan-600 select-none',
-                  isSelected(rowIndex, colIndex) &&
-                    'border-cyan-700! bg-cyan-950',
+                  'flex justify-center p-1  m-1/2 rounded-md border border-stone-600 select-none',
+                  isSelected(rowIndex, colIndex) && 'border-white! shadow',
                   isMultiSelected() && 'border-dotted',
                   isNationalHoliday(date) && 'bg-slate-900 text-slate-500',
-                  isWeekend(date) && 'bg-slate-900 text-slate-500',
-                  isToday(date) && 'bg-cyan-800',
+                  isWeekend(date) && 'border-stone-700 text-stone-700',
+                  isToday(date) && 'bg-stone-700',
                 )}
+                style={{
+                  boxShadow: isSelected(rowIndex, colIndex)
+                    ? '0 0 5px #fff'
+                    : '',
+                }}
                 onMouseDown={() => {
                   setIsDragging(true);
                   setSelection({
@@ -159,14 +166,14 @@ export const Calendar = ({
             ))}
 
             {/* Row sum */}
-            <div className="text-right font-semibold pr-2">
+            <div className="text-center font-semibold ms-2 pt-1.25 bg-stone-700 rounded-md">
               {rowSum(project.id)}
             </div>
           </>
         ))}
 
         {/* ===== Column sums ===== */}
-        <div className="sticky left-0 z-10 font-semibold mt-2 text-right pe-2 opacity-70">
+        <div className="sticky left-0 z-10 font-semibold mt-3 text-right pe-2 opacity-70">
           Σ
         </div>
 
@@ -176,12 +183,12 @@ export const Calendar = ({
             <div
               key={`sum-${date.toISOString()}`}
               className={[
-                'text-center font-semibold  px-2 border-t border-slate-600 mt-2',
+                'text-center font-semibold  px-2 py-1 bg-stone-600 rounded-md mt-2',
                 sum === 0
-                  ? 'text-slate-600'
+                  ? 'text-stone-400'
                   : sum >= 8
-                    ? 'text-green-600'
-                    : 'text-yellow-600',
+                    ? 'text-white'
+                    : 'text-yellow-500',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -191,7 +198,10 @@ export const Calendar = ({
           );
         })}
 
-        <div />
+        {/* ===== Row sum all days ===== */}
+        <div className="text-center font-semibold mt-2 ms-2 pt-1 bg-stone-700 border border-stone-500 rounded-md">
+          {totalSum()}
+        </div>
       </div>
     </div>
   );
