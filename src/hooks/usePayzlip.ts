@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import dayjs from 'dayjs';
 import { TokenState } from '../states/token.state';
-import { type PayzlipReportResponse } from '../types/project';
+import {
+  PayzlipReportedDaysState,
+  PayzlipVerifiedDaysState,
+} from '../states/payzlip.state';
+import { type PayzlipReportResponse, type PayzlipDate } from '../types/project';
 
 const API_ROOT = 'https://api.payzlip.se';
 const ISO_STRING = 'YYYY-MM-DDTHH:mm:ss.SSS';
@@ -21,6 +25,12 @@ export const usePayzlip = () => {
   const refreshToken = useAtomValue(TokenState);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [decoded, setDecoded] = useState<PayzlipJwt | null>(null);
+  const [payzlipReportedDays, setPayzlipReportedDays] = useAtom(
+    PayzlipReportedDaysState,
+  );
+  const [payzlipVerifiedDays, setPayzlipVerifiedDays] = useAtom(
+    PayzlipVerifiedDaysState,
+  );
 
   const fetchAccessToken = async () => {
     const res = await fetch(API_ROOT + '/v1/auth/refresh', {
@@ -104,7 +114,56 @@ export const usePayzlip = () => {
       throw new Error('Request failed');
     }
 
-    return JSON.parse(body);
+    const ret = (await JSON.parse(body)) as PayzlipReportResponse;
+
+    const datesWithReports = Object.entries(ret)
+      .map(([date, reports]) => {
+        return { date, reports };
+      })
+      .filter(({ reports }) => reports.reports.length > 0);
+    setPayzlipReportedDays(
+      datesWithReports.map((d) => d.date) as PayzlipDate[],
+    );
+    setPayzlipVerifiedDays(
+      datesWithReports
+        .filter((d) => d.reports.verified)
+        .map((d) => d.date) as PayzlipDate[],
+    );
+
+    return ret;
+  };
+
+  const verifyDays = async (dates: PayzlipDate[]) => {
+    if (!dates || dates.length === 0) {
+      throw new Error('Expected dates to verify');
+    }
+
+    const res = await fetch(
+      API_ROOT + `/v1/_/reporting/user/${USER_ID}/verify-days`,
+      {
+        method: 'PATCH',
+        headers: {
+          authorization: 'Bearer ' + accessToken,
+          'content-type': 'application/json',
+        },
+
+        body: JSON.stringify({ dates }),
+      },
+    );
+
+    const body = await res.text();
+    if (res.status >= 300) {
+      console.error(body);
+      throw new Error('Request failed');
+    }
+
+    try {
+      const d = JSON.parse(body);
+      return d;
+    } catch (err) {
+      console.error(body);
+      throw err;
+    }
   };
 
   return {
@@ -112,5 +171,8 @@ export const usePayzlip = () => {
     decoded,
     getProjects,
     getReports,
+    payzlipReportedDays,
+    payzlipVerifiedDays,
+    verifyDays,
   };
 };

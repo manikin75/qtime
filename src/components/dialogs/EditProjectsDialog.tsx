@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogHeader,
   DialogFooter,
-  DialogDescription,
 } from '../Dialog';
 import { Button } from '../Button';
 import { MyProjectsState } from '../../states/myProjects.state';
@@ -52,18 +51,17 @@ export const EditProjectsDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit projects</DialogTitle>
-          <DialogDescription>Add or remove projects</DialogDescription>
+        <DialogHeader className="p-4">
+          <DialogTitle>Select your projects</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto">
             {projects
-              .filter((p) => !p.archived)
+              // .filter((p) => !p.archived)
               .map((project) => (
                 <div
                   key={project.id}
-                  className="flex flex-row gap-2 justify-start items-start hover:bg-stone-200 p-1 rounded-md cursor-pointer"
+                  className="flex flex-row gap-2 justify-start items-start hover:bg-stone-200 px-1 rounded-md cursor-pointer"
                   onClick={() => handleChange(project)}
                 >
                   <input

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { cn } from '@sglara/cn';
 import { format, isToday, isWeekend } from 'date-fns';
 import { NumberInput } from './NumberInput';
+import { Button } from './Button';
 import { useCalendar, ABSENCE_DESCRIPTION } from '../hooks/useCalendar';
-import { InfoIcon } from '@phosphor-icons/react';
-import { type Project } from '../types/project';
+import { usePayzlip } from '../hooks/usePayzlip';
+import { InfoIcon, SealCheckIcon } from '@phosphor-icons/react';
+import { type PayzlipDate, type Project } from '../types/project';
 import { type NationalHoliday } from '../hooks/useNationalHolidays';
 
 export const Calendar = ({
@@ -12,14 +14,18 @@ export const Calendar = ({
   month,
   projects,
   setAbsenceDialogOpen,
+  setVerifyDaysDialogOpen,
 }: {
   year: number;
   month: number;
   projects: Project[];
   setAbsenceDialogOpen: (open: boolean) => void;
+  setVerifyDaysDialogOpen: (open: boolean) => void;
 }) => {
   const [tooltip, setTooltip] = useState<NationalHoliday | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const { payzlipReportedDays, payzlipVerifiedDays } = usePayzlip();
 
   const {
     inputRefs,
@@ -35,7 +41,7 @@ export const Calendar = ({
     onFocus,
     onNavigate,
     onSelectExtend,
-    onActivate,
+    // onActivate,
     selection,
     setSelection,
     isMultiSelected,
@@ -58,6 +64,16 @@ export const Calendar = ({
     window.addEventListener('mouseup', stop);
     return () => window.removeEventListener('mouseup', stop);
   }, []);
+
+  useEffect(() => {
+    if (!projects.length) return;
+    // setActiveCell({ row: projects[0].id, col: new Date().getDay() });
+    setTimeout(() => {
+      document
+        .getElementById(`${projects[0].id}-${new Date().toISOString()}`)
+        ?.focus();
+    }, 100);
+  }, [projects]);
 
   return (
     <div className="my-10 overflow-x-auto w-full">
@@ -139,7 +155,7 @@ export const Calendar = ({
                 {project.name}
               </span>
               <div
-                className="bg-white/40 h-px inline-block"
+                className="bg-cyan-300/60 h-px inline-block"
                 style={{
                   width: `${(100 * rowSum(project.id)) / 172}%`,
                 }}
@@ -150,6 +166,7 @@ export const Calendar = ({
             {daysInMonth.map((date, colIndex) => (
               <div
                 key={`${project.id}-${date.toISOString()}`}
+                id={`${project.id}-${date.toISOString()}`}
                 className={cn(
                   'flex justify-center p-1  m-1/2 rounded-md border border-stone-600 select-none',
                   isSelected(project.id, colIndex) && 'border-white! shadow',
@@ -192,7 +209,6 @@ export const Calendar = ({
                   onFocus={() => onFocus(project.id, colIndex)}
                   onNavigate={(dir) => onNavigate(rowIndex, colIndex, dir)}
                   onSelectExtend={(dir) => onSelectExtend(dir)}
-                  onActivate={() => onActivate(project.id, colIndex)}
                   className="w-[26px] text-center border rounded border-none"
                 />
               </div>
@@ -206,8 +222,20 @@ export const Calendar = ({
         ))}
 
         {/* ===== Column sums ===== */}
-        <div className="sticky left-0 z-10 font-semibold mt-3 text-right pe-2 opacity-70">
-          Σ
+        <div className="sticky left-0 z-10 font-semibold mt-3 flex flex-row justify-between pe-2 opacity-70">
+          <Button
+            size="sm"
+            className="flex items-center justify-center gap-1 py-0.5 ms-2"
+            disabled={
+              !payzlipReportedDays?.length ||
+              payzlipReportedDays.length === (payzlipVerifiedDays?.length || 0)
+            }
+            onClick={() => setVerifyDaysDialogOpen(true)}
+          >
+            <SealCheckIcon />
+            Verify days
+          </Button>
+          <span className="mt-0.5">Σ</span>
         </div>
 
         {daysInMonth.map((date) => {
@@ -215,16 +243,21 @@ export const Calendar = ({
           return (
             <div
               key={`sum-${date.toISOString()}`}
-              className={[
+              className={cn(
                 'text-center font-semibold  px-2 py-1 bg-stone-600 rounded-md mt-2',
+                payzlipVerifiedDays?.includes(
+                  format(date, 'yyyy-MM-dd') as PayzlipDate,
+                )
+                  ? 'border border-green-500 bg-green-700'
+                  : payzlipReportedDays?.includes(
+                      format(date, 'yyyy-MM-dd') as PayzlipDate,
+                    ) && 'border border-green-600 bg-green-950',
                 sum === 0
                   ? 'text-stone-400'
                   : sum >= 8
                     ? 'text-white'
                     : 'text-yellow-500',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              )}
             >
               {sum || '-'}
             </div>

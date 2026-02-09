@@ -31,14 +31,16 @@ export const EditTokenDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="p-4">
           <DialogTitle>Edit token</DialogTitle>
-          <DialogDescription>Lorem ipsum dolor sit amet</DialogDescription>
+          <DialogDescription>
+            Copy the token from the Payzlip app and paste here
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-row gap-4">
             <textarea
-              className="w-full h-24 border border-stone-700 rounded-md p-2"
+              className="w-full h-48 border border-stone-700 rounded-md p-2"
               placeholder="Token"
               value={token || ''}
               onChange={(e) => setToken(e.target.value)}

@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { EditTokenDialog } from '../components/dialogs/EditTokenDialog';
 import { AbsenceDialog } from '../components/dialogs/AbsenceDialog';
 import { EditProjectsDialog } from '../components/dialogs/EditProjectsDialog';
+import { VerifyDaysDialog } from '../components/dialogs/VerifyDaysDialog';
 import { usePayzlip } from '../hooks/usePayzlip';
 import {
   PlusIcon,
@@ -43,6 +44,8 @@ export const TimeReport = () => {
   const [editTokenDialogOpen, setEditTokenDialogOpen] = useState(false);
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
+  const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
+
   const { payzlipReady, getProjects } = usePayzlip();
 
   useEffect(() => {
@@ -111,6 +114,7 @@ export const TimeReport = () => {
           month={month}
           projects={myProjects}
           setAbsenceDialogOpen={setAbsenceDialogOpen}
+          setVerifyDaysDialogOpen={setVerifyDaysDialogOpen}
         />
       </div>
       <EditTokenDialog
@@ -124,6 +128,10 @@ export const TimeReport = () => {
       <EditProjectsDialog
         open={editProjectsDialogOpen}
         onOpenChange={setEditProjectsDialogOpen}
+      />
+      <VerifyDaysDialog
+        open={verifyDaysDialogOpen}
+        onOpenChange={setVerifyDaysDialogOpen}
       />
     </Layout>
   );

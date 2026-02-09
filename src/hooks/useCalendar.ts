@@ -44,6 +44,7 @@ export const useCalendar = ({
     Record<string, PayzlipReportDay>
   >({});
   const [values, setValues] = useAtom(CellValueAtom);
+
   const [absence, setAbsence] = useAtom(AbsenceAtom);
   const [activeCell, setActiveCell] = useState<CellPos | null>(null);
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
@@ -81,20 +82,27 @@ export const useCalendar = ({
     };
     // Populate projects from server
     reports();
-  }, [payzlipReady, year, month]);
+  }, [payzlipReady, year, month]); // Endless re-renders if adding getReports, thank you very much typescript
 
   useEffect(() => {
     if (!payzlipReady || !reportedDays) return;
     Object.entries(reportedDays).forEach(([date, day]) => {
       if (!day?.reports.length) return;
-      console.log(date, day);
       const d = new Date(date);
-      day?.reports.forEach((report) => {
-        console.log('setting', report.projectId, d, report.hours);
-        setValue(report.projectId, d, report.hours);
+
+      // Reduce reports to projectId -> hours, in case of overlapping reports for the same day
+      const hoursPerProject = day.reports.reduce<Record<string, number>>(
+        (acc, report) => {
+          acc[report.projectId] = (acc[report.projectId] ?? 0) + report.hours;
+          return acc;
+        },
+        {},
+      );
+      Object.entries(hoursPerProject).forEach(([projectId, hours]) => {
+        setValue(projectId, d, hours);
       });
     });
-  }, [payzlipReady, reportedDays]);
+  }, [payzlipReady, reportedDays]); // Endless re-renders if adding setValue, thank you very much typescript
 
   const rowSum = (projectId: string) =>
     daysInMonth.reduce((sum, d) => sum + getValue(projectId, d), 0);
@@ -321,6 +329,9 @@ export const useCalendar = ({
 
         redoStack.current.push(last);
       }
+
+      // if ((e.shiftKey && e.key === '!')) {
+      // }
 
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();

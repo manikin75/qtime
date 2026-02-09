@@ -59,7 +59,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex flex-row gap-1 items-center">
               <ControlIcon size={18} />
               <KeyboardShortcut>A</KeyboardShortcut>
-              <span>report absence</span>
+              <span>mark absence</span>
             </div>
             <div className="flex flex-row gap-1 items-center">
               <KeyboardShortcut>0</KeyboardShortcut> -{' '}

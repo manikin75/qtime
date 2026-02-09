@@ -9,20 +9,11 @@ interface NumberInputProps {
   className?: string;
   onNavigate?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onSelectExtend?: (dir: 'up' | 'down' | 'left' | 'right') => void;
-  onActivate?: () => void;
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
   (
-    {
-      value,
-      onChange,
-      onFocus,
-      className,
-      onNavigate,
-      onSelectExtend,
-      onActivate,
-    },
+    { value, onChange, onFocus, className, onNavigate, onSelectExtend },
     ref,
   ) => {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -74,7 +65,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         onChange={handleOnChange}
         onFocus={(e) => {
           e.target.select();
-          onFocus ? onFocus() : null;
+          if (onFocus) onFocus();
         }}
         onKeyDown={handleKeyDown}
         className={cn(
