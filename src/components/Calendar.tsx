@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { cn } from '@sglara/cn';
 import { format, isToday, isWeekend } from 'date-fns';
 import { NumberInput } from './NumberInput';
-import { useCalendar } from '../hooks/useCalendar';
+import { useCalendar, ABSENCE_DESCRIPTION } from '../hooks/useCalendar';
+import { InfoIcon } from '@phosphor-icons/react';
 import { type Project } from '../types/project';
 import { type NationalHoliday } from '../hooks/useNationalHolidays';
 
@@ -10,10 +11,12 @@ export const Calendar = ({
   year,
   month,
   projects,
+  setAbsenceDialogOpen,
 }: {
   year: number;
   month: number;
   projects: Project[];
+  setAbsenceDialogOpen: (open: boolean) => void;
 }) => {
   const [tooltip, setTooltip] = useState<NationalHoliday | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -38,6 +41,8 @@ export const Calendar = ({
     isMultiSelected,
     nationalHolidays,
     isNationalHoliday,
+    absence,
+    getAbsenceKey,
   } = useCalendar({ year, month, projects });
 
   const showTooltip = (date: Date) => {
@@ -59,7 +64,7 @@ export const Calendar = ({
       <div
         className="grid gap-1 text-sm w-full"
         style={{
-          gridTemplateColumns: `200px repeat(${daysInMonth.length}, 28px) auto`,
+          gridTemplateColumns: `400px repeat(${daysInMonth.length}, 28px) auto`,
         }}
       >
         {/* ===== Header row ===== */}
@@ -69,7 +74,7 @@ export const Calendar = ({
           <div
             key={date.toISOString()}
             className={cn(
-              'flex flex-col items-center px-4 gap-1 mb-2 border-b border-stone-600 py-1 relative',
+              'flex flex-col items-center px-4 gap-1 border-b border-stone-600 py-1 relative',
               isNationalHoliday(date) && 'text-red-500 cursor-pointer',
               isWeekend(date) && 'text-red-500',
               isToday(date) && 'bg-stone-700 rounded',
@@ -93,6 +98,32 @@ export const Calendar = ({
           Σ
         </div>
 
+        {/* ===== Absence rows ===== */}
+        <div className="sticky left-0 z-10 flex-row gap-x-2 items-center flex font-medium rounded-sm ps-2 py-1 italic opacity-50">
+          Absence{' '}
+          <InfoIcon size="16" onClick={() => setAbsenceDialogOpen(true)} />
+        </div>
+        {daysInMonth.map((date) => (
+          <div
+            key={'absence_' + date.toISOString()}
+            className={cn(
+              'flex flex-col items-center px-4 gap-1 relative text-lg cursor-pointer',
+            )}
+          >
+            <span
+              title={
+                ABSENCE_DESCRIPTION[
+                  absence[getAbsenceKey(year, month, date.getDate())] || '🤒'
+                ]
+              }
+            >
+              {' '}
+              {absence[getAbsenceKey(year, month, date.getDate())] ?? ' '}
+            </span>
+          </div>
+        ))}
+        <div />
+
         {/* ===== Project rows ===== */}
         {projects.map((project, rowIndex) => (
           <>
@@ -100,13 +131,15 @@ export const Calendar = ({
             <div
               key={project.id}
               className={cn(
-                'sticky left-0 z-10 flex-col flex items-start font-medium rounded-sm ps-2',
-                activeCell?.row === rowIndex && 'bg-stone-700',
+                'left-0 z-10 flex-col flex items-start font-sm rounded-sm ps-2 pt-1 relative',
+                activeCell?.row === project.id && 'bg-stone-700',
               )}
             >
-              {project.name}
+              <span className="w-[390px] flex items-start hover:bg-stone-800 hover:overflow-auto hover:z-10 hover:w-auto hover:absolute whitespace-nowrap overflow-ellipsis overflow-hidden">
+                {project.name}
+              </span>
               <div
-                className="bg-white/40 h-[1px] inline-block"
+                className="bg-white/40 h-px inline-block"
                 style={{
                   width: `${(100 * rowSum(project.id)) / 172}%`,
                 }}
@@ -119,30 +152,30 @@ export const Calendar = ({
                 key={`${project.id}-${date.toISOString()}`}
                 className={cn(
                   'flex justify-center p-1  m-1/2 rounded-md border border-stone-600 select-none',
-                  isSelected(rowIndex, colIndex) && 'border-white! shadow',
+                  isSelected(project.id, colIndex) && 'border-white! shadow',
                   isMultiSelected() && 'border-dotted',
-                  isNationalHoliday(date) && 'bg-slate-900 text-slate-500',
-                  isWeekend(date) && 'border-stone-700 text-stone-700',
+                  (isNationalHoliday(date) || isWeekend(date)) &&
+                    'border-stone-700 text-stone-700',
                   isToday(date) && 'bg-stone-700',
                 )}
                 style={{
-                  boxShadow: isSelected(rowIndex, colIndex)
+                  boxShadow: isSelected(project.id, colIndex)
                     ? '0 0 5px #fff'
                     : '',
                 }}
                 onMouseDown={() => {
                   setIsDragging(true);
                   setSelection({
-                    start: { row: rowIndex, col: colIndex },
-                    end: { row: rowIndex, col: colIndex },
+                    start: { row: project.id, col: colIndex },
+                    end: { row: project.id, col: colIndex },
                   });
-                  setActiveCell({ row: rowIndex, col: colIndex });
+                  setActiveCell({ row: project.id, col: colIndex });
                 }}
                 onMouseEnter={() => {
                   if (!isDragging || !selection) return;
                   setSelection((prev) =>
                     prev
-                      ? { ...prev, end: { row: rowIndex, col: colIndex } }
+                      ? { ...prev, end: { row: project.id, col: colIndex } }
                       : null,
                   );
                 }}
@@ -156,10 +189,10 @@ export const Calendar = ({
                   }}
                   value={getValue(project.id, date)}
                   onChange={(v) => setValue(project.id, date, v)}
-                  onFocus={() => onFocus(rowIndex, colIndex)}
+                  onFocus={() => onFocus(project.id, colIndex)}
                   onNavigate={(dir) => onNavigate(rowIndex, colIndex, dir)}
                   onSelectExtend={(dir) => onSelectExtend(dir)}
-                  onActivate={() => onActivate(rowIndex, colIndex)}
+                  onActivate={() => onActivate(project.id, colIndex)}
                   className="w-[26px] text-center border rounded border-none"
                 />
               </div>

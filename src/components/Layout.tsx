@@ -19,7 +19,7 @@ const KeyboardShortcut = ({ children }: { children: React.ReactNode }) => {
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col justify-center min-h-screen bg-[#232222] text-white w-screen">
-      <div className="h-auto w-[1200px] flex flex-col m-auto justify-center items-center">
+      <div className="h-auto w-[1440px] flex flex-col m-auto justify-center items-center">
         <header className="flex flex-row gap-x-2 items-center justify-left h-10 w-full text-center border-b border-white">
           <div className="text-left">
             <h1 className="text-2xl font-bold">QTime</h1>
@@ -55,6 +55,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <ControlIcon size={18} />
               <KeyboardShortcut>Z</KeyboardShortcut>
               undo
+            </div>
+            <div className="flex flex-row gap-1 items-center">
+              <ControlIcon size={18} />
+              <KeyboardShortcut>A</KeyboardShortcut>
+              <span>report absence</span>
             </div>
             <div className="flex flex-row gap-1 items-center">
               <KeyboardShortcut>0</KeyboardShortcut> -{' '}
