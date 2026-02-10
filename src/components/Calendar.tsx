@@ -49,6 +49,7 @@ export const Calendar = ({
     isNationalHoliday,
     absence,
     getAbsenceKey,
+    uploadDayToPayzlip,
   } = useCalendar({ year, month, projects });
 
   const showTooltip = (date: Date) => {
@@ -148,7 +149,8 @@ export const Calendar = ({
               key={project.id}
               className={cn(
                 'left-0 z-10 flex-col flex items-start font-sm rounded-sm ps-2 pt-1 relative',
-                activeCell?.row === project.id && 'bg-stone-700',
+                // activeCell?.row === project.id && 'bg-stone-700',
+                isSelected(project.id, activeCell?.col || 0) && 'bg-stone-700',
               )}
             >
               <span className="w-[390px] flex items-start hover:bg-stone-800 hover:overflow-auto hover:z-10 hover:w-auto hover:absolute whitespace-nowrap overflow-ellipsis overflow-hidden">
@@ -173,7 +175,7 @@ export const Calendar = ({
                   isMultiSelected() && 'border-dotted',
                   (isNationalHoliday(date) || isWeekend(date)) &&
                     'border-stone-700 text-stone-700',
-                  isToday(date) && 'bg-stone-700',
+                  isToday(date) && 'bg-cyan-900',
                 )}
                 style={{
                   boxShadow: isSelected(project.id, colIndex)
@@ -258,6 +260,7 @@ export const Calendar = ({
                     ? 'text-white'
                     : 'text-yellow-500',
               )}
+              onClick={() => uploadDayToPayzlip(date)}
             >
               {sum || '-'}
             </div>

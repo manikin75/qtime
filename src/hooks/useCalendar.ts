@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import {
   useNationalHolidays,
   type NationalHoliday,
@@ -9,7 +10,7 @@ import { useAtom } from 'jotai';
 import { usePayzlip } from './usePayzlip';
 import { type Project, type ProjectId } from '../types/project';
 import type { Change, CellKey, CellPos, Direction } from '../types/cells';
-import { type PayzlipReportDay } from '../types/project';
+// import { type PayzlipReportDay } from '../types/project';
 
 const CellValueAtom = atomWithStorage<Record<CellKey, number>>(
   'cellValues',
@@ -40,9 +41,9 @@ export const useCalendar = ({
   projects: Project[];
 }) => {
   const { getForYear } = useNationalHolidays();
-  const [reportedDays, setReportedDays] = useState<
-    Record<string, PayzlipReportDay>
-  >({});
+  // const [reportedDays, setReportedDays] = useState<
+  //   Record<string, PayzlipReportDay>
+  // >({});
   const [values, setValues] = useAtom(CellValueAtom);
 
   const [absence, setAbsence] = useAtom(AbsenceAtom);
@@ -50,7 +51,7 @@ export const useCalendar = ({
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
     [],
   );
-  const { payzlipReady, getReports } = usePayzlip();
+  const { payzlipReady, getReports, reportHoursForDate } = usePayzlip();
   const [selection, setSelection] = useState<{
     start: CellPos;
     end: CellPos;
@@ -60,6 +61,7 @@ export const useCalendar = ({
     HTMLInputElement[][] // [row][col]
   >([]);
   const clipboardRef = useRef<number[][]>([]);
+  const queryClient = useQueryClient();
 
   const undoStack = useRef<Change[][]>([]);
   const redoStack = useRef<Change[][]>([]);
@@ -70,19 +72,20 @@ export const useCalendar = ({
   const setValue = (projectId: string, date: Date, value: number) => {
     const key: CellKey = `${projectId}_${date.toDateString()}`;
     setValues((prev) => ({ ...prev, [key]: value }));
+
+    console.log('setValue', { values });
+    // reportHours(projectId, date, value);
   };
 
-  useEffect(() => {
-    if (!payzlipReady) return;
-    const reports = async () => {
+  const { data: reportedDays, isLoading: isLoadingReportedDays } = useQuery({
+    queryKey: ['reports', year, month],
+    queryFn: () => {
       const start = new Date(year, month, 1);
       const end = new Date(year, month + 1, 0);
-      const r = await getReports(start, end > new Date() ? new Date() : end);
-      setReportedDays(r);
-    };
-    // Populate projects from server
-    reports();
-  }, [payzlipReady, year, month]); // Endless re-renders if adding getReports, thank you very much typescript
+      return getReports(start, end > new Date() ? new Date() : end);
+    },
+    enabled: payzlipReady,
+  });
 
   useEffect(() => {
     if (!payzlipReady || !reportedDays) return;
@@ -135,6 +138,28 @@ export const useCalendar = ({
       col >= c1 &&
       col <= c2
     );
+  };
+
+  const getAllForDate = (date: Date) => {
+    const d = date.toDateString();
+    return Object.entries(values)
+      .filter((v) => {
+        const datePart = v[0].split('_')[1];
+        return datePart === d;
+      })
+      .map((v) => {
+        const projectId = v[0].split('_')[0];
+        return { hours: v[1], projectId: projectId };
+      })
+      .filter((v) => v.hours > 0);
+  };
+
+  const uploadDayToPayzlip = async (date: Date) => {
+    const hours = getAllForDate(date);
+    console.log({ hours });
+    await reportHoursForDate(date, hours);
+    queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
+    // await reportHours(projects[0].id, date, hours);
   };
 
   const isMultiSelected = () => {
@@ -466,6 +491,7 @@ export const useCalendar = ({
     rowSum,
     columnSum,
     totalSum,
+    getAllForDate,
     isSelected,
     daysInMonth,
     onFocus,
@@ -478,5 +504,7 @@ export const useCalendar = ({
     nationalHolidays,
     isNationalHoliday,
     getAbsenceKey,
+    isLoadingReportedDays,
+    uploadDayToPayzlip,
   };
 };
