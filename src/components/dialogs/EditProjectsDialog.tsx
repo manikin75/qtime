@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import { usePayzlip } from '../../hooks/usePayzlip';
 import {
@@ -22,20 +22,14 @@ export const EditProjectsDialog = ({
   open,
   onOpenChange,
 }: EditProjectsDialogProps) => {
-  const [projects, setProjects] = useState<Project[]>([]);
   const [myProjects, setMyProjects] = useAtom(MyProjectsState);
   const { payzlipReady, getProjects } = usePayzlip();
 
-  useEffect(() => {
-    if (!payzlipReady) return;
-    const projects = async () => {
-      const p = await getProjects();
-      setProjects(p);
-      console.log(p);
-    };
-    // Populate projects from server
-    projects();
-  }, [payzlipReady]);
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => getProjects(),
+    enabled: payzlipReady,
+  });
 
   const handleChange = (project: Project) => {
     if (!myProjects || !myProjects.find((p) => p.id === project.id)) {
@@ -56,26 +50,28 @@ export const EditProjectsDialog = ({
         </DialogHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto">
-            {projects
-              // .filter((p) => !p.archived)
-              .map((project) => (
-                <div
-                  key={project.id}
-                  className="flex flex-row gap-2 justify-start items-start hover:bg-stone-200 px-1 rounded-md cursor-pointer"
-                  onClick={() => handleChange(project)}
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1.5"
-                    checked={
-                      myProjects.filter((p) => p.id === project.id).length > 0
-                    }
-                  />
-                  <div key={project.id}>
-                    {project.name} {project.id}
+            {isLoading ? (
+              <span>Loading...</span>
+            ) : (
+              projects.projects
+                // .filter((p) => !p.archived)
+                .map((project: Project) => (
+                  <div
+                    key={project.id}
+                    className="flex flex-row gap-2 justify-start items-start hover:bg-stone-200 px-1 rounded-md cursor-pointer"
+                    onClick={() => handleChange(project)}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1.5"
+                      checked={
+                        myProjects.filter((p) => p.id === project.id).length > 0
+                      }
+                    />
+                    <div key={project.id}>{project.name}</div>
                   </div>
-                </div>
-              ))}
+                ))
+            )}
           </div>
         </div>
         <DialogFooter className="bg-stone-500 p-4">

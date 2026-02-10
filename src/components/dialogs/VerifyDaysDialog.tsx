@@ -33,7 +33,7 @@ export const VerifyDaysDialog = ({
   useEffect(() => {
     if (!open) return;
 
-    setDaysToVerify(unverifiedDays);
+    // setDaysToVerify(unverifiedDays);
   }, [open, unverifiedDays]);
 
   const handleCancel = () => {

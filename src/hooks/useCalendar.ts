@@ -51,7 +51,8 @@ export const useCalendar = ({
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
     [],
   );
-  const { payzlipReady, getReports, reportHoursForDate } = usePayzlip();
+  const { payzlipReady, getReports, reportHoursForDate, deleteReport } =
+    usePayzlip();
   const [selection, setSelection] = useState<{
     start: CellPos;
     end: CellPos;
@@ -72,9 +73,6 @@ export const useCalendar = ({
   const setValue = (projectId: string, date: Date, value: number) => {
     const key: CellKey = `${projectId}_${date.toDateString()}`;
     setValues((prev) => ({ ...prev, [key]: value }));
-
-    console.log('setValue', { values });
-    // reportHours(projectId, date, value);
   };
 
   const { data: reportedDays, isLoading: isLoadingReportedDays } = useQuery({
@@ -187,7 +185,17 @@ export const useCalendar = ({
   const applyChanges = (changes: Change[]) => {
     changes.forEach(({ row, col, next }) => {
       setValue(projects[projectIdToRow(row)].id, daysInMonth[col], next);
+      if (next === 0) {
+        deleteReport(projects[projectIdToRow(row)].id, daysInMonth[col]);
+      } else {
+        reportHoursForDate(daysInMonth[col], [
+          { projectId: projects[projectIdToRow(row)].id, hours: next },
+        ]);
+      }
     });
+    // if (changes[0].next === 0) {
+    queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
+    // }
   };
 
   const recordChanges = (changes: Change[]) => {
@@ -406,11 +414,6 @@ export const useCalendar = ({
       window.removeEventListener('keyup', onKeyUp);
     };
   }, [selection, daysInMonth, projects]);
-
-  useEffect(() => {
-    if (!clipboardRef.current) return;
-    console.log(clipboardRef.current);
-  }, [clipboardRef]);
 
   const onFocus = (projectId: ProjectId, colIndex: number) => {
     setActiveCell({ row: projectId, col: colIndex });

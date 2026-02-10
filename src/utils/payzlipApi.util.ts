@@ -25,11 +25,10 @@ const payzlipApi = () => {
 
   const apiFetch = async <TData extends object | undefined>(
     endpoint: string,
-    method: 'GET' | 'POST' | 'PATCH',
+    method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
     accessToken: string,
     data?: TData,
   ) => {
-    console.log('payzlipApi', JSON.stringify(data));
     const res = await fetch(API_ROOT + endpoint, {
       method,
       headers: {
@@ -60,12 +59,18 @@ const payzlipApi = () => {
     accessToken: string,
     data?: TData,
   ) => apiFetch(endpoint, 'PATCH', accessToken, data);
+  const apiDelete = async <TData extends object | undefined>(
+    endpoint: string,
+    accessToken: string,
+    data?: TData,
+  ) => apiFetch(endpoint, 'DELETE', accessToken, data);
 
   return {
     fetchAccessToken,
     apiGet,
     apiPost,
     apiPatch,
+    apiDelete,
   };
 };
 

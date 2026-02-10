@@ -34,6 +34,16 @@ type PayzlipReportDay = {
 };
 type PayzlipReportResponse = Record<PayzlipDate, PayzlipReportDay>;
 
+type PayzlipReportUploadPayload = {
+  projectId: string;
+  startTime: string;
+  endTime: string;
+  comment: string;
+  timeCode: 'normal';
+};
+
+type ReportItem = { projectId: string; hours: number };
+
 export type {
   ProjectId,
   Project,
@@ -41,4 +51,6 @@ export type {
   PayzlipReport,
   PayzlipReportDay,
   PayzlipReportResponse,
+  PayzlipReportUploadPayload,
+  ReportItem,
 };

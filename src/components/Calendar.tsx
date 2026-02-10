@@ -247,6 +247,11 @@ export const Calendar = ({
               key={`sum-${date.toISOString()}`}
               className={cn(
                 'text-center font-semibold  px-2 py-1 bg-stone-600 rounded-md mt-2',
+                !payzlipVerifiedDays?.includes(
+                  format(date, 'yyyy-MM-dd') as PayzlipDate,
+                ) &&
+                  sum &&
+                  'cursor-pointer',
                 payzlipVerifiedDays?.includes(
                   format(date, 'yyyy-MM-dd') as PayzlipDate,
                 )

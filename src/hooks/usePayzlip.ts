@@ -9,24 +9,18 @@ import {
   PayzlipVerifiedDaysState,
 } from '../states/payzlip.state';
 import { payzlipApi } from '../utils/payzlipApi.util';
-import { type PayzlipReportResponse, type PayzlipDate } from '../types/project';
-import { set } from 'date-fns';
+import {
+  type PayzlipReportResponse,
+  type PayzlipDate,
+  type ReportItem,
+  type PayzlipReportUploadPayload,
+} from '../types/project';
 
-const API_ROOT = 'https://api.payzlip.se';
+// const API_ROOT = 'https://api.payzlip.se';
 const ISO_STRING = 'YYYY-MM-DDTHH:mm:ss.SSS';
 const ORGANIZATION_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
 const USER_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
 // const CLIENT_ID = '5jofr8lhuof52fjs87m911k70e';
-
-type PayzlipReport = {
-  projectId: string;
-  startTime: string;
-  endTime: string;
-  comment: string;
-  timeCode: 'normal';
-};
-
-type ReportItem = { projectId: string; hours: number };
 
 interface PayzlipJwt extends JwtPayload {
   sub?: string;
@@ -34,7 +28,8 @@ interface PayzlipJwt extends JwtPayload {
 }
 
 export const usePayzlip = () => {
-  const { fetchAccessToken, apiGet, apiPost } = payzlipApi();
+  const { fetchAccessToken, apiGet, apiPost, apiPatch, apiDelete } =
+    payzlipApi();
   const refreshToken = useAtomValue(TokenState);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [decoded, setDecoded] = useState<PayzlipJwt | null>(null);
@@ -90,10 +85,10 @@ export const usePayzlip = () => {
       lang: 'sv',
     };
 
-    const ret = (await apiGet(
+    const ret: PayzlipReportResponse = await apiGet(
       `/v1/_/reporting/user/${USER_ID}/activities?${serialize(query)}`,
       accessToken,
-    )) as PayzlipReportResponse;
+    );
 
     setReports(ret);
 
@@ -120,7 +115,7 @@ export const usePayzlip = () => {
     // const fixedReport = transformReport(date, projectId, hours);
     // if (!fixedReport) return;
     let start = 8;
-    const itemsToUpload: PayzlipReport[] = [];
+    const itemsToUpload: PayzlipReportUploadPayload[] = [];
     items?.forEach((d) => {
       itemsToUpload.push({
         projectId: d.projectId,
@@ -148,7 +143,30 @@ export const usePayzlip = () => {
     return;
   };
 
+  const deleteReport = async (projectId: string, date: Date) => {
+    if (!accessToken) throw new Error('No access token');
+    const formattedDate = dayjs(date).format('YYYY-MM-DD');
+
+    const dayReports = Object.entries(reports)?.filter(
+      (d) => d[0] === formattedDate,
+    )[0];
+    if (!dayReports) return;
+    const report = dayReports[1]?.reports.find(
+      (rep) => rep.projectId === projectId,
+    );
+    if (!report) return;
+
+    const res = await apiDelete(
+      `/v1/_/reporting/user/${USER_ID}/presence/reports`,
+      accessToken,
+      { reportIds: [report.id] },
+    );
+
+    return res;
+  };
+
   const verifyDays = async (dates: PayzlipDate[]) => {
+    if (!accessToken) throw new Error('No access token');
     if (!dates || dates.length === 0) {
       throw new Error('Expected dates to verify');
     }
@@ -171,5 +189,6 @@ export const usePayzlip = () => {
     payzlipVerifiedDays,
     verifyDays,
     reportHoursForDate,
+    deleteReport,
   };
 };
