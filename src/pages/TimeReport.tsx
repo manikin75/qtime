@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAtomValue } from 'jotai';
 import { Layout } from '../components/Layout';
 import { Calendar } from '../components/Calendar';
@@ -7,6 +7,7 @@ import { EditTokenDialog } from '../components/dialogs/EditTokenDialog';
 import { AbsenceDialog } from '../components/dialogs/AbsenceDialog';
 import { EditProjectsDialog } from '../components/dialogs/EditProjectsDialog';
 import { VerifyDaysDialog } from '../components/dialogs/VerifyDaysDialog';
+import { WelcomeDialog } from '../components/dialogs/WelcomeDialog';
 import {
   PlusIcon,
   PokerChipIcon,
@@ -26,7 +27,16 @@ export const TimeReport = () => {
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
   const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
+  const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
   const token = useAtomValue(TokenState);
+
+  useEffect(() => {
+    const seenWelcome = localStorage.getItem('seenWelcome');
+    if (!seenWelcome) {
+      setWelcomeDialogOpen(true);
+      localStorage.setItem('seenWelcome', 'true');
+    }
+  }, [welcomeDialogOpen]);
 
   const changeMonth = (dir: 'left' | 'right') => {
     if (dir === 'left') {
@@ -103,6 +113,10 @@ export const TimeReport = () => {
       <VerifyDaysDialog
         open={verifyDaysDialogOpen}
         onOpenChange={setVerifyDaysDialogOpen}
+      />
+      <WelcomeDialog
+        open={welcomeDialogOpen}
+        onOpenChange={setWelcomeDialogOpen}
       />
     </Layout>
   );

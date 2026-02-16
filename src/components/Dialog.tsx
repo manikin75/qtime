@@ -151,7 +151,7 @@ const DialogTitle = ({
   ...restProps
 }: ComponentProps<typeof DialogPrimitive.Title>) => (
   <DialogPrimitive.Title
-    className={cn(className, 'q-font-h4 tracking-tight not-first:leading-none')}
+    className={cn(className, 'text-xl tracking-tight not-first:leading-none')}
     {...restProps}
   />
 );
