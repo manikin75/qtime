@@ -3,6 +3,7 @@ import { cn } from '@sglara/cn';
 import { format, isToday, isWeekend } from 'date-fns';
 import { NumberInput } from './NumberInput';
 import { Button } from './Button';
+import { WithTooltip } from './WithTooltip';
 import { useCalendar, ABSENCE_DESCRIPTION } from '../hooks/useCalendar';
 import { usePayzlip } from '../hooks/usePayzlip';
 import { InfoIcon, SealCheckIcon } from '@phosphor-icons/react';
@@ -94,7 +95,7 @@ export const Calendar = ({
               'flex flex-col items-center px-4 gap-1 border-b border-stone-600 py-1 relative',
               isNationalHoliday(date) && 'text-red-500 cursor-pointer',
               isWeekend(date) && 'text-red-500',
-              isToday(date) && 'bg-stone-700 rounded',
+              isToday(date) && 'bg-cyan-900 rounded',
             )}
             onMouseEnter={() =>
               isNationalHoliday(date) ? showTooltip(date) : null
@@ -127,16 +128,20 @@ export const Calendar = ({
               'flex flex-col items-center px-4 gap-1 relative text-lg cursor-pointer',
             )}
           >
-            <span
-              title={
-                ABSENCE_DESCRIPTION[
-                  absence[getAbsenceKey(year, month, date.getDate())] || '🤒'
-                ]
-              }
-            >
-              {' '}
-              {absence[getAbsenceKey(year, month, date.getDate())] ?? ' '}
-            </span>
+            {absence[getAbsenceKey(year, month, date.getDate())] && (
+              <WithTooltip
+                content={
+                  ABSENCE_DESCRIPTION[
+                    absence[getAbsenceKey(year, month, date.getDate())] || '🤒'
+                  ]
+                }
+              >
+                <span className="text-stone-700">
+                  {' '}
+                  {absence[getAbsenceKey(year, month, date.getDate())] ?? ' '}
+                </span>
+              </WithTooltip>
+            )}
           </div>
         ))}
         <div />
@@ -175,7 +180,7 @@ export const Calendar = ({
                   isMultiSelected() && 'border-dotted',
                   (isNationalHoliday(date) || isWeekend(date)) &&
                     'border-stone-700 text-stone-700',
-                  isToday(date) && 'bg-cyan-900',
+                  // isToday(date) && 'bg-cyan-900',
                 )}
                 style={{
                   boxShadow: isSelected(project.id, colIndex)
@@ -212,6 +217,9 @@ export const Calendar = ({
                   onNavigate={(dir) => onNavigate(rowIndex, colIndex, dir)}
                   onSelectExtend={(dir) => onSelectExtend(dir)}
                   className="w-[26px] text-center border rounded border-none"
+                  disabled={payzlipVerifiedDays?.includes(
+                    format(date, 'yyyy-MM-dd') as PayzlipDate,
+                  )}
                 />
               </div>
             ))}

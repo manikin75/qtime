@@ -81,7 +81,7 @@ export const usePayzlip = () => {
 
     const query: Record<string, string> = {
       startDate: dayjs(start).startOf('day').format(ISO_STRING),
-      endDate: dayjs(end || start).format(ISO_STRING),
+      endDate: dayjs(end).endOf('month').format(ISO_STRING),
       lang: 'sv',
     };
 
@@ -185,6 +185,7 @@ export const usePayzlip = () => {
     decoded,
     getProjects,
     getReports,
+    reports,
     payzlipReportedDays,
     payzlipVerifiedDays,
     verifyDays,
