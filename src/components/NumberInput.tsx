@@ -9,7 +9,7 @@ interface NumberInputProps {
   className?: string;
   onNavigate?: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onSelectExtend?: (dir: 'up' | 'down' | 'left' | 'right') => void;
-  onActivate?: () => void;
+  disabled?: boolean;
 }
 
 export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
@@ -21,7 +21,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       className,
       onNavigate,
       onSelectExtend,
-      onActivate,
+      disabled,
     },
     ref,
   ) => {
@@ -74,13 +74,14 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         onChange={handleOnChange}
         onFocus={(e) => {
           e.target.select();
-          onFocus ? onFocus() : null;
+          if (onFocus) onFocus();
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          'focus:outline-none focus:ring-2 focus:ring-cyan-600',
+          'focus:outline-none focus:ring-2 focus:ring-transparent',
           className,
         )}
+        disabled={disabled || false}
       />
     );
   },

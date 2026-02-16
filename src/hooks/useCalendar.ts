@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import {
   useNationalHolidays,
   type NationalHoliday,
@@ -6,13 +7,33 @@ import {
 import { format } from 'date-fns';
 import { atomWithStorage } from 'jotai/utils';
 import { useAtom } from 'jotai';
-import { type Project } from '../types/project';
+import { usePayzlip } from './usePayzlip';
+import {
+  type PayzlipDate,
+  type Project,
+  type ProjectId,
+} from '../types/project';
 import type { Change, CellKey, CellPos, Direction } from '../types/cells';
+// import { type PayzlipReportDay } from '../types/project';
 
 const CellValueAtom = atomWithStorage<Record<CellKey, number>>(
   'cellValues',
   {},
 );
+const ABSENCE_KEY = ['🤒', '👶', '🌴', '🤠', null] as const;
+type AbsenceType = (typeof ABSENCE_KEY)[number];
+type AbsenceValue = Exclude<AbsenceType, null>;
+type AbsenceKey = `${number}_${number}_${number}`;
+const AbsenceAtom = atomWithStorage<Record<AbsenceKey, AbsenceType>>(
+  'absence',
+  {},
+);
+export const ABSENCE_DESCRIPTION: Record<AbsenceValue, string> = {
+  '🤒': 'Sick',
+  '👶': 'VAB',
+  '🌴': 'Vacay',
+  '🤠': 'Unpaid',
+};
 
 export const useCalendar = ({
   year,
@@ -25,39 +46,141 @@ export const useCalendar = ({
 }) => {
   const { getForYear } = useNationalHolidays();
   const [values, setValues] = useAtom(CellValueAtom);
+  const [absence, setAbsence] = useAtom(AbsenceAtom);
   const [activeCell, setActiveCell] = useState<CellPos | null>(null);
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
     [],
   );
+  const { payzlipReady, getReports, reportHoursForDate, deleteReport } =
+    usePayzlip();
   const [selection, setSelection] = useState<{
     start: CellPos;
     end: CellPos;
   } | null>(null);
+  const [uploadingDate, setUploadingDate] = useState<number | null>(null);
   const [shiftKey, setShiftKey] = useState(false);
   const inputRefs = useRef<
     HTMLInputElement[][] // [row][col]
   >([]);
   const clipboardRef = useRef<number[][]>([]);
+  const queryClient = useQueryClient();
 
   const undoStack = useRef<Change[][]>([]);
   const redoStack = useRef<Change[][]>([]);
 
-  // Stack handling (undo/redo)
-  const applyChanges = (changes: Change[]) => {
-    changes.forEach(({ row, col, next }) => {
-      setValue(projects[row].id, daysInMonth[col], next);
+  const getValue = (projectId: string, date: Date) =>
+    values[`${projectId}_${date.toDateString()}`] ?? 0;
+
+  const setValue = (projectId: string, date: Date, value: number) => {
+    const key: CellKey = `${projectId}_${date.toDateString()}`;
+    setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const { data: reportedDays, isLoading: isLoadingReportedDays } = useQuery({
+    queryKey: ['reports', year, month],
+    queryFn: () => {
+      const start = new Date(year, month, 1);
+      const end = new Date(year, month + 1, 0);
+      return getReports(start, end > new Date() ? new Date() : end);
+    },
+    enabled: payzlipReady,
+  });
+
+  useEffect(() => {
+    if (!payzlipReady || !reportedDays) return;
+    Object.entries(reportedDays).forEach(([date, day]) => {
+      if (!day?.reports.length) return;
+      const d = new Date(date);
+
+      // Reduce reports to projectId -> hours, in case of overlapping reports for the same day
+      const hoursPerProject = day.reports.reduce<Record<string, number>>(
+        (acc, report) => {
+          acc[report.projectId] = (acc[report.projectId] ?? 0) + report.hours;
+          return acc;
+        },
+        {},
+      );
+      Object.entries(hoursPerProject).forEach(([projectId, hours]) => {
+        setValue(projectId, d, hours);
+      });
     });
+  }, [payzlipReady, reportedDays]); // Endless re-renders if adding setValue, thank you very much typescript
+
+  const rowSum = (projectId: string) =>
+    daysInMonth.reduce((sum, d) => sum + getValue(projectId, d), 0);
+
+  const columnSum = (date: Date) =>
+    projects.reduce((sum, p) => sum + getValue(p.id, date), 0);
+
+  const totalSum = () => projects.reduce((sum, p) => sum + rowSum(p.id), 0);
+
+  const projectIdToRow = (projectId: ProjectId) =>
+    projects.findIndex((p) => p.id === projectId);
+
+  const isSelected = (row: ProjectId, col: number) => {
+    if (!selection) return false;
+
+    const r1 = Math.min(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
+    const r2 = Math.max(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
+    const c1 = Math.min(selection.start.col, selection.end.col);
+    const c2 = Math.max(selection.start.col, selection.end.col);
+
+    return (
+      projectIdToRow(row) >= r1 &&
+      projectIdToRow(row) <= r2 &&
+      col >= c1 &&
+      col <= c2
+    );
   };
 
-  const recordChanges = (changes: Change[]) => {
-    undoStack.current.push(changes);
-    redoStack.current = [];
+  const getAllForDate = (date: Date) => {
+    const d = date.toDateString();
+    return Object.entries(values)
+      .filter((v) => {
+        const datePart = v[0].split('_')[1];
+        return datePart === d;
+      })
+      .map((v) => {
+        const projectId = v[0].split('_')[0];
+        return { hours: v[1], projectId: projectId };
+      })
+      .filter((v) => v.hours > 0);
   };
 
-  const daysInMonth = useMemo(() => {
+  const uploadDayToPayzlip = async (date: Date) => {
+    setUploadingDate(date.getDate());
+    const hours = getAllForDate(date);
+    // console.log({ hours, reportedDays });
+    const reportsToDelete =
+      reportedDays &&
+      reportedDays[format(date, 'yyyy-MM-dd') as PayzlipDate]?.reports;
+    if (reportsToDelete?.length) {
+      await Promise.all(
+        reportsToDelete.map(async (d) => await deleteReport(d.projectId, date)),
+      );
+    }
+    await reportHoursForDate(date, hours);
+    queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
+    setUploadingDate(null);
+  };
+
+  const isMultiSelected = () => {
+    if (!selection) return false;
+    return (
+      selection.start.row !== selection.end.row ||
+      selection.start.col !== selection.end.col
+    );
+  };
+
+  const getDaysInMonth = () => {
     const days: Date[] = [];
 
-    // Antal dagar i månaden (JS-tricket: dag 0 i nästa månad)
     const numberOfDays = new Date(year, month + 1, 0).getDate();
 
     for (let day = 1; day <= numberOfDays; day++) {
@@ -65,7 +188,32 @@ export const useCalendar = ({
     }
 
     return days;
-  }, [year, month]);
+  };
+  const daysInMonth: Date[] = getDaysInMonth();
+
+  // Stack handling (undo/redo)
+  const applyChanges = (changes: Change[]) => {
+    changes.forEach(({ row, col, next }) => {
+      setValue(projects[projectIdToRow(row)].id, daysInMonth[col], next);
+
+      // Auto-post to payzlip on change. Disabled for now, as it's a bit wonky
+      // if (next === 0) {
+      //   deleteReport(projects[projectIdToRow(row)].id, daysInMonth[col]);
+      // } else {
+      //   reportHoursForDate(daysInMonth[col], [
+      //     { projectId: projects[projectIdToRow(row)].id, hours: next },
+      //   ]);
+      // }
+    });
+    // if (changes[0].next === 0) {
+    queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
+    // }
+  };
+
+  const recordChanges = (changes: Change[]) => {
+    undoStack.current.push(changes);
+    redoStack.current = [];
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -88,8 +236,14 @@ export const useCalendar = ({
   const forEachSelectedCell = (cb: (row: number, col: number) => void) => {
     if (!selection) return;
 
-    const r1 = Math.min(selection.start.row, selection.end.row);
-    const r2 = Math.max(selection.start.row, selection.end.row);
+    const r1 = Math.min(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
+    const r2 = Math.max(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
     const c1 = Math.min(selection.start.col, selection.end.col);
     const c2 = Math.max(selection.start.col, selection.end.col);
 
@@ -100,14 +254,32 @@ export const useCalendar = ({
     }
   };
 
+  const getAbsenceKey = (
+    year: number,
+    month: number,
+    col: number,
+  ): AbsenceKey => `${year}_${month}_${col}`;
+
+  const nextAbsence = (current: AbsenceType | null): AbsenceType => {
+    if (!current) return ABSENCE_KEY[0];
+    const idx = ABSENCE_KEY.indexOf(current);
+    return ABSENCE_KEY[(idx + 1) % ABSENCE_KEY.length];
+  };
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       setShiftKey(e.shiftKey);
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
         if (!selection) return;
 
-        const r1 = Math.min(selection.start.row, selection.end.row);
-        const r2 = Math.max(selection.start.row, selection.end.row);
+        const r1 = Math.min(
+          projectIdToRow(selection.start.row),
+          projectIdToRow(selection.end.row),
+        );
+        const r2 = Math.max(
+          projectIdToRow(selection.start.row),
+          projectIdToRow(selection.end.row),
+        );
         const c1 = Math.min(selection.start.col, selection.end.col);
         const c2 = Math.max(selection.start.col, selection.end.col);
 
@@ -133,13 +305,13 @@ export const useCalendar = ({
         const changes: Change[] = [];
         data.forEach((row, rOffset) => {
           row.forEach((value, cOffset) => {
-            const r = activeCell.row + rOffset;
+            const r = projectIdToRow(activeCell.row) + rOffset;
             const c = activeCell.col + cOffset;
 
             if (r < projects.length && c < daysInMonth.length) {
               // setValue(projects[r].id, daysInMonth[c], value);
               changes.push({
-                row: r,
+                row: projects[r].id,
                 col: c,
                 prev: getValue(projects[r].id, daysInMonth[c]),
                 next: value,
@@ -160,7 +332,7 @@ export const useCalendar = ({
         forEachSelectedCell((r, c) => {
           // setValue(projects[r].id, daysInMonth[c], 0);
           changes.push({
-            row: r,
+            row: projects[r].id,
             col: c,
             prev: getValue(projects[r].id, daysInMonth[c]),
             next: 0,
@@ -180,7 +352,7 @@ export const useCalendar = ({
         forEachSelectedCell((r, c) => {
           // setValue(projects[r].id, daysInMonth[c], value);
           changes.push({
-            row: r,
+            row: projects[r].id,
             col: c,
             prev: getValue(projects[r].id, daysInMonth[c]),
             next: value,
@@ -197,10 +369,46 @@ export const useCalendar = ({
         if (!last) return;
 
         last.forEach(({ row, col, prev }) => {
-          setValue(projects[row].id, daysInMonth[col], prev);
+          setValue(projects[projectIdToRow(row)].id, daysInMonth[col], prev);
         });
 
         redoStack.current.push(last);
+      }
+
+      // if ((e.shiftKey && e.key === '!')) {
+      // }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+
+        if (!activeCell) return;
+
+        const baseKey = getAbsenceKey(year, month, activeCell.col + 1);
+        const current = absence[baseKey] ?? null;
+        const valueToApply = nextAbsence(current);
+
+        if (valueToApply === null) {
+          setAbsence((prev) => {
+            const next = { ...prev };
+            forEachSelectedCell((_, col) => {
+              const key = getAbsenceKey(year, month, col + 1);
+              delete next[key];
+            });
+            return next;
+          });
+          return;
+        }
+
+        setAbsence((prev) => {
+          const next = { ...prev };
+
+          forEachSelectedCell((_, col) => {
+            const key = getAbsenceKey(year, month, col + 1);
+            next[key] = valueToApply;
+          });
+
+          return next;
+        });
       }
     };
 
@@ -219,50 +427,12 @@ export const useCalendar = ({
     };
   }, [selection, daysInMonth, projects]);
 
-  useEffect(() => {
-    if (!clipboardRef.current) return;
-    console.log(clipboardRef.current);
-  }, [clipboardRef.current]);
-
-  const setValue = (projectId: string, date: Date, value: number) => {
-    const key: CellKey = `${projectId}_${date.toDateString()}`;
-    setValues((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const getValue = (projectId: string, date: Date) =>
-    values[`${projectId}_${date.toDateString()}`] ?? 0;
-
-  const rowSum = (projectId: string) =>
-    daysInMonth.reduce((sum, d) => sum + getValue(projectId, d), 0);
-
-  const columnSum = (date: Date) =>
-    projects.reduce((sum, p) => sum + getValue(p.id, date), 0);
-
-  const isSelected = (row: number, col: number) => {
-    if (!selection) return false;
-
-    const r1 = Math.min(selection.start.row, selection.end.row);
-    const r2 = Math.max(selection.start.row, selection.end.row);
-    const c1 = Math.min(selection.start.col, selection.end.col);
-    const c2 = Math.max(selection.start.col, selection.end.col);
-
-    return row >= r1 && row <= r2 && col >= c1 && col <= c2;
-  };
-
-  const isMultiSelected = () => {
-    if (!selection) return false;
-    return (
-      selection.start.row !== selection.end.row ||
-      selection.start.col !== selection.end.col
-    );
-  };
-
-  const onFocus = (rowIndex: number, colIndex: number) => {
-    setActiveCell({ row: rowIndex, col: colIndex });
+  const onFocus = (projectId: ProjectId, colIndex: number) => {
+    setActiveCell({ row: projectId, col: colIndex });
     if (!shiftKey) {
       setSelection({
-        start: { row: rowIndex, col: colIndex },
-        end: { row: rowIndex, col: colIndex },
+        start: { row: projectId, col: colIndex },
+        end: { row: projectId, col: colIndex },
       });
     }
   };
@@ -289,7 +459,7 @@ export const useCalendar = ({
     }[dir];
 
     const next = {
-      row: selection.end.row + delta.r,
+      row: projectIdToRow(selection.end.row) + delta.r,
       col: selection.end.col + delta.c,
     };
 
@@ -303,23 +473,25 @@ export const useCalendar = ({
       return;
     }
 
+    const newEnd = { row: projects[next.row].id, col: next.col };
+
     setSelection((prev) =>
       prev
-        ? { ...prev, end: next }
+        ? { ...prev, end: newEnd }
         : {
-            start: next,
-            end: next,
+            start: newEnd,
+            end: newEnd,
           },
     );
 
     inputRefs.current[next.row]?.[next.col]?.focus();
   };
 
-  const onActivate = (rowIndex: number, colIndex: number) => {
-    setActiveCell({ row: rowIndex, col: colIndex });
+  const onActivate = (projectId: string, colIndex: number) => {
+    setActiveCell({ row: projectId, col: colIndex });
     setSelection({
-      start: { row: rowIndex, col: colIndex },
-      end: { row: rowIndex, col: colIndex },
+      start: { row: projectId, col: colIndex },
+      end: { row: projectId, col: colIndex },
     });
   };
 
@@ -329,8 +501,12 @@ export const useCalendar = ({
     setActiveCell,
     setValue,
     getValue,
+    absence,
+    setAbsence,
     rowSum,
     columnSum,
+    totalSum,
+    getAllForDate,
     isSelected,
     daysInMonth,
     onFocus,
@@ -342,5 +518,9 @@ export const useCalendar = ({
     isMultiSelected,
     nationalHolidays,
     isNationalHoliday,
+    getAbsenceKey,
+    isLoadingReportedDays,
+    uploadDayToPayzlip,
+    uploadingDate,
   };
 };

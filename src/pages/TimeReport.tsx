@@ -1,34 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAtomValue } from 'jotai';
 import { Layout } from '../components/Layout';
 import { Calendar } from '../components/Calendar';
 import { Button } from '../components/Button';
-import { PlusIcon, PokerChipIcon } from '@phosphor-icons/react';
+import { EditTokenDialog } from '../components/dialogs/EditTokenDialog';
+import { AbsenceDialog } from '../components/dialogs/AbsenceDialog';
+import { EditProjectsDialog } from '../components/dialogs/EditProjectsDialog';
+import { VerifyDaysDialog } from '../components/dialogs/VerifyDaysDialog';
+import { WelcomeDialog } from '../components/dialogs/WelcomeDialog';
+import {
+  PlusIcon,
+  PokerChipIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+} from '@phosphor-icons/react';
 import { format } from 'date-fns';
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
-import { type Project } from '../types/project';
-
-const defaultProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Project 1',
-    description: 'This is a description of project 1',
-  },
-  {
-    id: '2',
-    name: 'Project 2',
-    description: 'This is a description of project 2',
-  },
-  {
-    id: '3',
-    name: 'Project 3',
-    description: 'This is a description of project 3',
-  },
-];
+import { MyProjectsState } from '../states/myProjects.state';
+import { TokenState } from '../states/token.state';
+// import { type Project } from '../types/project';
 
 export const TimeReport = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
-  const [projects, setProjects] = useState<Project[]>(defaultProjects);
+  const myProjects = useAtomValue(MyProjectsState);
+  const [editTokenDialogOpen, setEditTokenDialogOpen] = useState(false);
+  const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
+  const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
+  const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
+  const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
+  const token = useAtomValue(TokenState);
+
+  useEffect(() => {
+    const seenWelcome = localStorage.getItem('seenWelcome');
+    if (!seenWelcome) {
+      setWelcomeDialogOpen(true);
+      localStorage.setItem('seenWelcome', 'true');
+    }
+  }, [welcomeDialogOpen]);
 
   const changeMonth = (dir: 'left' | 'right') => {
     if (dir === 'left') {
@@ -48,21 +56,15 @@ export const TimeReport = () => {
     }
   };
 
-  const addProject = () => {
-    setProjects((p) => [
-      ...p,
-      { id: p.length.toString(), name: `New project`, description: '' },
-    ]);
-  };
-
   return (
     <Layout>
-      <div className="mt-10 flex flex-col items-center justify-start h-full">
+      <div className="mb-10 mt-4 flex flex-col items-center justify-start h-full">
         <div className="flex flex-row justify-between w-full">
           <Button
             size="sm"
             className="flex items-center justify-center"
-            onClick={addProject}
+            onClick={() => setEditProjectsDialogOpen(true)}
+            disabled={!token}
           >
             <PlusIcon />
             Add Project
@@ -80,15 +82,42 @@ export const TimeReport = () => {
           </div>
           <Button
             size="sm"
-            className="flex items-center justify-center gap-x-1"
+            className={`flex items-center justify-center gap-x-1 ${!token && 'bg-amber-500'}`}
+            onClick={() => setEditTokenDialogOpen(true)}
           >
             <PokerChipIcon />
             Edit token
           </Button>
         </div>
 
-        <Calendar year={year} month={month} projects={projects} />
+        <Calendar
+          year={year}
+          month={month}
+          projects={myProjects}
+          setAbsenceDialogOpen={setAbsenceDialogOpen}
+          setVerifyDaysDialogOpen={setVerifyDaysDialogOpen}
+        />
       </div>
+      <EditTokenDialog
+        open={editTokenDialogOpen}
+        onOpenChange={setEditTokenDialogOpen}
+      />
+      <AbsenceDialog
+        open={absenceDialogOpen}
+        onOpenChange={setAbsenceDialogOpen}
+      />
+      <EditProjectsDialog
+        open={editProjectsDialogOpen}
+        onOpenChange={setEditProjectsDialogOpen}
+      />
+      <VerifyDaysDialog
+        open={verifyDaysDialogOpen}
+        onOpenChange={setVerifyDaysDialogOpen}
+      />
+      <WelcomeDialog
+        open={welcomeDialogOpen}
+        onOpenChange={setWelcomeDialogOpen}
+      />
     </Layout>
   );
 };
