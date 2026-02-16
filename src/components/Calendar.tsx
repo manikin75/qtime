@@ -3,10 +3,11 @@ import { cn } from '@sglara/cn';
 import { format, isToday, isWeekend } from 'date-fns';
 import { NumberInput } from './NumberInput';
 import { Button } from './Button';
+import { DailySum } from './DailySum';
 import { WithTooltip } from './WithTooltip';
 import { useCalendar, ABSENCE_DESCRIPTION } from '../hooks/useCalendar';
 import { usePayzlip } from '../hooks/usePayzlip';
-import { TailSpin } from 'react-loader-spinner';
+
 import { InfoIcon, SealCheckIcon } from '@phosphor-icons/react';
 import { type PayzlipDate, type Project } from '../types/project';
 import { type NationalHoliday } from '../hooks/useNationalHolidays';
@@ -27,7 +28,7 @@ export const Calendar = ({
   const [tooltip, setTooltip] = useState<NationalHoliday | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const { payzlipReportedDays, payzlipVerifiedDays, reports } = usePayzlip();
+  const { payzlipReportedDays, payzlipVerifiedDays } = usePayzlip();
 
   const {
     inputRefs,
@@ -105,7 +106,7 @@ export const Calendar = ({
             onMouseLeave={() => setTooltip(null)}
           >
             {tooltip && tooltip.date === format(date, 'yyyy-MM-dd') && (
-              <div className="absolute z-10 top-0 left-0 w-40  bg-slate-900 text-white rounded-sm p-1 -translate-x-1/2">
+              <div className="absolute z-10 top-0 left-0 w-40  bg-black/90 text-white rounded-sm p-1 -translate-x-1/2">
                 {tooltip?.local_name || tooltip?.name}
               </div>
             )}
@@ -250,74 +251,15 @@ export const Calendar = ({
           <span className="mt-0.5">Σ</span>
         </div>
 
-        {daysInMonth.map((date) => {
-          const sum = columnSum(date);
-          const reportedSum =
-            reports[format(date, 'yyyy-MM-dd') as PayzlipDate]?.workedHours;
-          return (
-            <div
-              key={`sum-${date.toISOString()}`}
-              className={cn(
-                'text-center font-semibold  px-2 py-1 bg-stone-600 rounded-md mt-2',
-                !payzlipVerifiedDays?.includes(
-                  format(date, 'yyyy-MM-dd') as PayzlipDate,
-                ) &&
-                  sum &&
-                  'cursor-pointer',
-                payzlipVerifiedDays?.includes(
-                  format(date, 'yyyy-MM-dd') as PayzlipDate,
-                )
-                  ? 'border border-green-500 bg-green-700'
-                  : reportedSum && reportedSum !== sum
-                    ? 'border border-amber-600 bg-amber-950'
-                    : payzlipReportedDays?.includes(
-                        format(date, 'yyyy-MM-dd') as PayzlipDate,
-                      ) && 'border border-green-600 bg-green-950',
-                sum === 0
-                  ? 'text-stone-400'
-                  : sum >= 8
-                    ? 'text-white'
-                    : 'text-yellow-500',
-              )}
-              onClick={() => uploadDayToPayzlip(date)}
-            >
-              {uploadingDate === date.getDate() ? (
-                <div className="mt-1">
-                  <TailSpin
-                    visible={true}
-                    height="14"
-                    width="14"
-                    color="#fff"
-                    ariaLabel="tail-spin-loading"
-                    radius="1"
-                    wrapperStyle={{}}
-                    wrapperClass=""
-                  />
-                </div>
-              ) : (
-                <WithTooltip
-                  content={
-                    payzlipVerifiedDays?.includes(
-                      format(date, 'yyyy-MM-dd') as PayzlipDate,
-                    )
-                      ? 'Verified day'
-                      : reportedSum && reportedSum !== sum
-                        ? `Reported hours (${reportedSum}h) do not match the hours in the calendar (${sum}h)`
-                        : payzlipReportedDays?.includes(
-                              format(date, 'yyyy-MM-dd') as PayzlipDate,
-                            )
-                          ? 'Reported, but not yet verified'
-                          : sum
-                            ? 'Click to report this day to Payzlip'
-                            : 'No hours entered for this day'
-                  }
-                >
-                  <span>{sum || '-'}</span>
-                </WithTooltip>
-              )}
-            </div>
-          );
-        })}
+        {daysInMonth.map((date) => (
+          <DailySum
+            key={`sum-${date.toISOString()}`}
+            date={date}
+            calendarSum={columnSum(date)}
+            busy={uploadingDate === date.getDate()}
+            uploadDayToPayzlip={uploadDayToPayzlip}
+          />
+        ))}
 
         {/* ===== Row sum all days ===== */}
         <div className="text-center font-semibold mt-2 ms-2 pt-1 bg-stone-700 border border-stone-500 rounded-md">
