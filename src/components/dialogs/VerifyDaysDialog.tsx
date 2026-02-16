@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { TailSpin } from 'react-loader-spinner';
 import { format } from 'date-fns';
 import { cn } from '../../utils/cn.util';
@@ -24,13 +25,8 @@ export const VerifyDaysDialog = ({
   open,
   onOpenChange,
 }: VerifyDaysDialogProps) => {
-  const {
-    payzlipReportedDays,
-    payzlipVerifiedDays,
-    reports,
-    getReports,
-    verifyDays,
-  } = usePayzlip();
+  const { payzlipReportedDays, payzlipVerifiedDays, reports, verifyDays } =
+    usePayzlip();
   const [daysToVerify, setDaysToVerify] = useState<PayzlipDate[]>([]);
   const [currentSelectedRow, setCurrentSelectedRow] = useState<number>(0);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -38,6 +34,7 @@ export const VerifyDaysDialog = ({
     if (!payzlipReportedDays?.length) return [];
     return payzlipReportedDays.filter((d) => !payzlipVerifiedDays?.includes(d));
   }, [payzlipReportedDays, payzlipVerifiedDays]);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setDaysToVerify(unverifiedDays);
@@ -79,17 +76,6 @@ export const VerifyDaysDialog = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [unverifiedDays, currentSelectedRow, unverifiedDays]);
 
-  useEffect(() => {
-    if (!open) return;
-    console.log({ reports });
-
-    // const hours = getAllForDate(date);
-    // console.log({ hours });
-    // await reportHoursForDate(date, hours);
-
-    // setDaysToVerify(unverifiedDays);
-  }, [open, unverifiedDays]);
-
   const handleCancel = () => {
     onOpenChange(false);
   };
@@ -101,10 +87,8 @@ export const VerifyDaysDialog = ({
     if (ret < 400) {
       // Success
       const [year, month] = daysToVerify[0].split('-').map((s) => parseInt(s));
-      const start = new Date(year, month - 1, 1);
-      const end = new Date(year, month, 0);
       setProcessing('GET');
-      getReports(start, end);
+      queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
       onOpenChange(false);
       setProcessing(null);
       return;
