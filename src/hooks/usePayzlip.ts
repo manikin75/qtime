@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
-import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import dayjs from 'dayjs';
 import { TokenState } from '../states/token.state';
 import {
@@ -8,31 +7,30 @@ import {
   PayzlipReportedDaysState,
   PayzlipVerifiedDaysState,
 } from '../states/payzlip.state';
-import { payzlipApi } from '../utils/payzlipApi.util';
+import { usePayzlipApi } from '../utils/payzlipApi.util';
 import {
   type PayzlipReportResponse,
   type PayzlipDate,
   type ReportItem,
   type PayzlipReportUploadPayload,
+  type Project,
 } from '../types/project';
+import { MyProjectsState } from '../states/myProjects.state';
 
-// const API_ROOT = 'https://api.payzlip.se';
 const ISO_STRING = 'YYYY-MM-DDTHH:mm:ss.SSS';
 const ORGANIZATION_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
 const USER_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
-// const CLIENT_ID = '5jofr8lhuof52fjs87m911k70e';
-
-interface PayzlipJwt extends JwtPayload {
-  sub?: string;
-  scope?: string;
-}
 
 export const usePayzlip = () => {
-  const { fetchAccessToken, apiGet, apiPost, apiPatch, apiDelete } =
-    payzlipApi();
   const refreshToken = useAtomValue(TokenState);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [decoded, setDecoded] = useState<PayzlipJwt | null>(null);
+  const {
+    accessToken,
+    refetchAccessToken,
+    apiGet,
+    apiPost,
+    apiPatch,
+    apiDelete,
+  } = usePayzlipApi(refreshToken);
   const [reports, setReports] = useAtom(PayzlipReportdState);
   const [payzlipReportedDays, setPayzlipReportedDays] = useAtom(
     PayzlipReportedDaysState,
@@ -40,6 +38,7 @@ export const usePayzlip = () => {
   const [payzlipVerifiedDays, setPayzlipVerifiedDays] = useAtom(
     PayzlipVerifiedDaysState,
   );
+  const [myProjects, setMyProjects] = useAtom(MyProjectsState);
 
   const serialize = (obj: Record<string, string>) => {
     const str: string[] = [];
@@ -53,15 +52,9 @@ export const usePayzlip = () => {
     if (!refreshToken) {
       return;
     }
-    const getToken = async () => {
-      const token = await fetchAccessToken(refreshToken);
-      setAccessToken(token);
-      setDecoded(jwtDecode<PayzlipJwt>(token));
-    };
-    getToken();
-    const interval = setInterval(getToken, 1800 * 1000);
+    const interval = setInterval(refetchAccessToken, 1800 * 1000);
     return () => clearInterval(interval);
-  }, [refreshToken]);
+  }, [refetchAccessToken, refreshToken]);
 
   const getProjects = async () => {
     if (!accessToken) throw new Error('No access token');
@@ -71,6 +64,36 @@ export const usePayzlip = () => {
     );
 
     return ret;
+  };
+
+  const addMissingProjectsToMyProjects = async (
+    reports: PayzlipReportResponse,
+  ) => {
+    const reportedProjects = new Set<string>();
+    const allProjects = (await getProjects())?.projects;
+
+    Object.values(reports).forEach((day) => {
+      if (!day?.reports?.length) return;
+
+      day.reports.forEach((report) => {
+        if (report.projectId) {
+          reportedProjects.add(report.projectId);
+        }
+      });
+    });
+
+    const missingProjects = [...reportedProjects].filter(
+      (projectId) => !myProjects.some((p) => p.id === projectId),
+    );
+
+    const projectsToAdd = missingProjects
+      .map((projectId) => {
+        const project = allProjects?.find((p: Project) => p.id === projectId);
+        if (!project) return null;
+        return { ...project, id: projectId };
+      })
+      .filter(Boolean);
+    setMyProjects((prev) => [...prev, ...projectsToAdd]);
   };
 
   const getReports = async (
@@ -105,6 +128,8 @@ export const usePayzlip = () => {
         .filter((d) => d.reports.verified)
         .map((d) => d.date) as PayzlipDate[],
     );
+
+    addMissingProjectsToMyProjects(ret);
 
     return ret;
   };
@@ -182,7 +207,6 @@ export const usePayzlip = () => {
 
   return {
     payzlipReady: accessToken !== null,
-    decoded,
     getProjects,
     getReports,
     reports,
