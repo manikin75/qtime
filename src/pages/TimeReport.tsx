@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import { format } from 'date-fns';
 import { MyProjectsState } from '../states/myProjects.state';
+import { TokenState } from '../states/token.state';
 // import { type Project } from '../types/project';
 
 export const TimeReport = () => {
@@ -25,6 +26,7 @@ export const TimeReport = () => {
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
   const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
+  const token = useAtomValue(TokenState);
 
   const changeMonth = (dir: 'left' | 'right') => {
     if (dir === 'left') {
@@ -52,6 +54,7 @@ export const TimeReport = () => {
             size="sm"
             className="flex items-center justify-center"
             onClick={() => setEditProjectsDialogOpen(true)}
+            disabled={!token}
           >
             <PlusIcon />
             Add Project
@@ -69,7 +72,7 @@ export const TimeReport = () => {
           </div>
           <Button
             size="sm"
-            className="flex items-center justify-center gap-x-1"
+            className={`flex items-center justify-center gap-x-1 ${!token && 'bg-amber-500'}`}
             onClick={() => setEditTokenDialogOpen(true)}
           >
             <PokerChipIcon />
