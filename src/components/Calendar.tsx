@@ -295,7 +295,25 @@ export const Calendar = ({
                   />
                 </div>
               ) : (
-                <span>{sum || '-'}</span>
+                <WithTooltip
+                  content={
+                    payzlipVerifiedDays?.includes(
+                      format(date, 'yyyy-MM-dd') as PayzlipDate,
+                    )
+                      ? 'Verified day'
+                      : reportedSum && reportedSum !== sum
+                        ? `Reported hours (${reportedSum}h) do not match the hours in the calendar (${sum}h)`
+                        : payzlipReportedDays?.includes(
+                              format(date, 'yyyy-MM-dd') as PayzlipDate,
+                            )
+                          ? 'Reported, but not yet verified'
+                          : sum
+                            ? 'Click to report this day to Payzlip'
+                            : 'No hours entered for this day'
+                  }
+                >
+                  <span>{sum || '-'}</span>
+                </WithTooltip>
               )}
             </div>
           );
