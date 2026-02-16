@@ -4,6 +4,7 @@ import { WithTooltip } from './WithTooltip';
 import { TailSpin } from 'react-loader-spinner';
 import { type PayzlipDate } from '../types/project';
 import { cn } from '../utils/cn.util';
+import { useMemo } from 'react';
 
 interface DailySumProps {
   date: Date;
@@ -21,20 +22,19 @@ export const DailySum = ({
   const { payzlipReportedDays, payzlipVerifiedDays, reports } = usePayzlip();
 
   const sum = calendarSum;
-  const reportedSum =
-    reports[format(date, 'yyyy-MM-dd') as PayzlipDate]?.workedHours;
-  const isVerified = payzlipVerifiedDays?.includes(
-    format(date, 'yyyy-MM-dd') as PayzlipDate,
+  const shortDate = useMemo(
+    () => format(date, 'yyyy-MM-dd') as PayzlipDate,
+    [date],
   );
-  const isReported = payzlipReportedDays?.includes(
-    format(date, 'yyyy-MM-dd') as PayzlipDate,
-  );
+  const reportedSum = reports[shortDate]?.workedHours;
+  const isVerified = payzlipVerifiedDays?.includes(shortDate);
+  const isReported = payzlipReportedDays?.includes(shortDate);
 
   return (
     <div
       key={`sum-${date.toISOString()}`}
       className={cn(
-        'text-center font-semibold  px-2 py-1 bg-stone-600 rounded-md mt-2',
+        'bg-stone-600 rounded-md mt-2',
         !isVerified && sum && 'cursor-pointer',
         isVerified
           ? 'border border-green-500 bg-green-700'
@@ -82,7 +82,9 @@ export const DailySum = ({
                     : 'No hours entered for this day'
           }
         >
-          <span>{sum || '-'}</span>
+          <div className="text-center font-semibold  px-2 pt-1">
+            {sum || '-'}
+          </div>
         </WithTooltip>
       )}
     </div>
