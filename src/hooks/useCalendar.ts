@@ -195,13 +195,15 @@ export const useCalendar = ({
   const applyChanges = (changes: Change[]) => {
     changes.forEach(({ row, col, next }) => {
       setValue(projects[projectIdToRow(row)].id, daysInMonth[col], next);
-      if (next === 0) {
-        deleteReport(projects[projectIdToRow(row)].id, daysInMonth[col]);
-      } else {
-        reportHoursForDate(daysInMonth[col], [
-          { projectId: projects[projectIdToRow(row)].id, hours: next },
-        ]);
-      }
+
+      // Auto-post to payzlip on change. Disabled for now, as it's a bit wonky
+      // if (next === 0) {
+      //   deleteReport(projects[projectIdToRow(row)].id, daysInMonth[col]);
+      // } else {
+      //   reportHoursForDate(daysInMonth[col], [
+      //     { projectId: projects[projectIdToRow(row)].id, hours: next },
+      //   ]);
+      // }
     });
     // if (changes[0].next === 0) {
     queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
