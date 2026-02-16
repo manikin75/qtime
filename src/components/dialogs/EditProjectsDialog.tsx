@@ -65,7 +65,8 @@ export const EditProjectsDialog = ({
                       type="checkbox"
                       className="mt-1.5"
                       checked={
-                        myProjects.filter((p) => p.id === project.id).length > 0
+                        myProjects?.filter((p) => p.id === project.id).length >
+                        0
                       }
                     />
                     <div key={project.id}>{project.name}</div>
