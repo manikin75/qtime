@@ -44,7 +44,7 @@ const payzlipApi = () => {
       throw new Error('Request failed');
     }
 
-    if (method === 'PATCH') {
+    if (method === 'PATCH' || method === 'DELETE') {
       return res.status;
     }
 

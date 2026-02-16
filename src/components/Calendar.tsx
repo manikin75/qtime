@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { WithTooltip } from './WithTooltip';
 import { useCalendar, ABSENCE_DESCRIPTION } from '../hooks/useCalendar';
 import { usePayzlip } from '../hooks/usePayzlip';
+import { TailSpin } from 'react-loader-spinner';
 import { InfoIcon, SealCheckIcon } from '@phosphor-icons/react';
 import { type PayzlipDate, type Project } from '../types/project';
 import { type NationalHoliday } from '../hooks/useNationalHolidays';
@@ -26,7 +27,7 @@ export const Calendar = ({
   const [tooltip, setTooltip] = useState<NationalHoliday | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const { payzlipReportedDays, payzlipVerifiedDays } = usePayzlip();
+  const { payzlipReportedDays, payzlipVerifiedDays, reports } = usePayzlip();
 
   const {
     inputRefs,
@@ -51,6 +52,7 @@ export const Calendar = ({
     absence,
     getAbsenceKey,
     uploadDayToPayzlip,
+    uploadingDate,
   } = useCalendar({ year, month, projects });
 
   const showTooltip = (date: Date) => {
@@ -250,6 +252,8 @@ export const Calendar = ({
 
         {daysInMonth.map((date) => {
           const sum = columnSum(date);
+          const reportedSum =
+            reports[format(date, 'yyyy-MM-dd') as PayzlipDate]?.workedHours;
           return (
             <div
               key={`sum-${date.toISOString()}`}
@@ -264,9 +268,11 @@ export const Calendar = ({
                   format(date, 'yyyy-MM-dd') as PayzlipDate,
                 )
                   ? 'border border-green-500 bg-green-700'
-                  : payzlipReportedDays?.includes(
-                      format(date, 'yyyy-MM-dd') as PayzlipDate,
-                    ) && 'border border-green-600 bg-green-950',
+                  : reportedSum && reportedSum !== sum
+                    ? 'border border-amber-600 bg-amber-950'
+                    : payzlipReportedDays?.includes(
+                        format(date, 'yyyy-MM-dd') as PayzlipDate,
+                      ) && 'border border-green-600 bg-green-950',
                 sum === 0
                   ? 'text-stone-400'
                   : sum >= 8
@@ -275,7 +281,22 @@ export const Calendar = ({
               )}
               onClick={() => uploadDayToPayzlip(date)}
             >
-              {sum || '-'}
+              {uploadingDate === date.getDate() ? (
+                <div className="mt-1">
+                  <TailSpin
+                    visible={true}
+                    height="14"
+                    width="14"
+                    color="#fff"
+                    ariaLabel="tail-spin-loading"
+                    radius="1"
+                    wrapperStyle={{}}
+                    wrapperClass=""
+                  />
+                </div>
+              ) : (
+                <span>{sum || '-'}</span>
+              )}
             </div>
           );
         })}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { TailSpin } from 'react-loader-spinner';
 import { format } from 'date-fns';
 import { cn } from '../../utils/cn.util';

@@ -8,7 +8,11 @@ import { format } from 'date-fns';
 import { atomWithStorage } from 'jotai/utils';
 import { useAtom } from 'jotai';
 import { usePayzlip } from './usePayzlip';
-import { type Project, type ProjectId } from '../types/project';
+import {
+  type PayzlipDate,
+  type Project,
+  type ProjectId,
+} from '../types/project';
 import type { Change, CellKey, CellPos, Direction } from '../types/cells';
 // import { type PayzlipReportDay } from '../types/project';
 
@@ -41,11 +45,7 @@ export const useCalendar = ({
   projects: Project[];
 }) => {
   const { getForYear } = useNationalHolidays();
-  // const [reportedDays, setReportedDays] = useState<
-  //   Record<string, PayzlipReportDay>
-  // >({});
   const [values, setValues] = useAtom(CellValueAtom);
-
   const [absence, setAbsence] = useAtom(AbsenceAtom);
   const [activeCell, setActiveCell] = useState<CellPos | null>(null);
   const [nationalHolidays, setNationalHolidays] = useState<NationalHoliday[]>(
@@ -57,6 +57,7 @@ export const useCalendar = ({
     start: CellPos;
     end: CellPos;
   } | null>(null);
+  const [uploadingDate, setUploadingDate] = useState<number | null>(null);
   const [shiftKey, setShiftKey] = useState(false);
   const inputRefs = useRef<
     HTMLInputElement[][] // [row][col]
@@ -153,11 +154,20 @@ export const useCalendar = ({
   };
 
   const uploadDayToPayzlip = async (date: Date) => {
+    setUploadingDate(date.getDate());
     const hours = getAllForDate(date);
-    console.log({ hours });
+    // console.log({ hours, reportedDays });
+    const reportsToDelete =
+      reportedDays &&
+      reportedDays[format(date, 'yyyy-MM-dd') as PayzlipDate]?.reports;
+    if (reportsToDelete?.length) {
+      await Promise.all(
+        reportsToDelete.map(async (d) => await deleteReport(d.projectId, date)),
+      );
+    }
     await reportHoursForDate(date, hours);
     queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
-    // await reportHours(projects[0].id, date, hours);
+    setUploadingDate(null);
   };
 
   const isMultiSelected = () => {
@@ -509,5 +519,6 @@ export const useCalendar = ({
     getAbsenceKey,
     isLoadingReportedDays,
     uploadDayToPayzlip,
+    uploadingDate,
   };
 };
