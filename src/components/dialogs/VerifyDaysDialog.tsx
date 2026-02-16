@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { TailSpin } from 'react-loader-spinner';
 import { format } from 'date-fns';
 import { cn } from '../../utils/cn.util';
 import {
@@ -23,15 +24,25 @@ export const VerifyDaysDialog = ({
   open,
   onOpenChange,
 }: VerifyDaysDialogProps) => {
-  const { payzlipReportedDays, payzlipVerifiedDays, reports } = usePayzlip();
+  const {
+    payzlipReportedDays,
+    payzlipVerifiedDays,
+    reports,
+    getReports,
+    verifyDays,
+  } = usePayzlip();
+  const [daysToVerify, setDaysToVerify] = useState<PayzlipDate[]>([]);
+  const [currentSelectedRow, setCurrentSelectedRow] = useState<number>(0);
+  const [processing, setProcessing] = useState<string | null>(null);
   const unverifiedDays = useMemo<PayzlipDate[]>(() => {
     if (!payzlipReportedDays?.length) return [];
-
     return payzlipReportedDays.filter((d) => !payzlipVerifiedDays?.includes(d));
   }, [payzlipReportedDays, payzlipVerifiedDays]);
-  const [daysToVerify, setDaysToVerify] =
-    useState<PayzlipDate[]>(unverifiedDays);
-  const [currentSelectedRow, setCurrentSelectedRow] = useState<number>(0);
+
+  useEffect(() => {
+    setDaysToVerify(unverifiedDays);
+    setProcessing(null);
+  }, [unverifiedDays]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -83,10 +94,21 @@ export const VerifyDaysDialog = ({
     onOpenChange(false);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!daysToVerify.length) return;
-    // console.log({ currentSelectedDate });
-    // await verifyDays(currentSelectedDate);
+    setProcessing('PATCH');
+    const ret = await verifyDays(daysToVerify);
+    if (ret < 400) {
+      // Success
+      const [year, month] = daysToVerify[0].split('-').map((s) => parseInt(s));
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0);
+      setProcessing('GET');
+      getReports(start, end);
+      onOpenChange(false);
+      setProcessing(null);
+      return;
+    }
   };
 
   if (!open) return null;
@@ -139,18 +161,32 @@ export const VerifyDaysDialog = ({
           </table>
           <div className="flex flex-row gap-4"></div>
         </div>
-        <DialogFooter className="bg-stone-500 p-4">
+        <DialogFooter className="bg-stone-500 p-4 relative">
+          <div className="absolute left-4 top-6 text-white">{processing}</div>
           <DialogClose>
             <Button className="min-w-25" onClick={handleCancel}>
               Close
             </Button>
           </DialogClose>
           <Button
-            className="min-w-25 bg-amber-500"
+            className="min-w-25 bg-amber-500 flex items-center justify-center"
             onClick={handleVerify}
-            disabled={!daysToVerify.length}
+            disabled={!daysToVerify.length || processing !== null}
           >
-            Verify days
+            {processing ? (
+              <TailSpin
+                visible={true}
+                height="25"
+                width="25"
+                color="#fff"
+                ariaLabel="tail-spin-loading"
+                radius="1"
+                wrapperStyle={{}}
+                wrapperClass=""
+              />
+            ) : (
+              'Verify days'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

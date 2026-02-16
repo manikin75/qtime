@@ -44,6 +44,10 @@ const payzlipApi = () => {
       throw new Error('Request failed');
     }
 
+    if (method === 'PATCH') {
+      return res.status;
+    }
+
     return JSON.parse(body);
   };
 
