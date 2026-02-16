@@ -41,6 +41,25 @@ export const VerifyDaysDialog = ({
     setProcessing(null);
   }, [unverifiedDays]);
 
+  const handleCancel = () => {
+    onOpenChange(false);
+  };
+
+  const handleVerify = async () => {
+    if (!daysToVerify.length) return;
+    setProcessing('PATCH');
+    const ret = await verifyDays(daysToVerify);
+    if (ret < 400) {
+      // Success
+      const [year, month] = daysToVerify[0].split('-').map((s) => parseInt(s));
+      setProcessing('GET');
+      queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
+      onOpenChange(false);
+      setProcessing(null);
+      return;
+    }
+  };
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
@@ -69,31 +88,15 @@ export const VerifyDaysDialog = ({
       } else if (e.key === 'Escape') {
         e.preventDefault();
         onOpenChange(false);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleVerify();
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [unverifiedDays, currentSelectedRow, unverifiedDays]);
-
-  const handleCancel = () => {
-    onOpenChange(false);
-  };
-
-  const handleVerify = async () => {
-    if (!daysToVerify.length) return;
-    setProcessing('PATCH');
-    const ret = await verifyDays(daysToVerify);
-    if (ret < 400) {
-      // Success
-      const [year, month] = daysToVerify[0].split('-').map((s) => parseInt(s));
-      setProcessing('GET');
-      queryClient.invalidateQueries({ queryKey: ['reports', year, month] });
-      onOpenChange(false);
-      setProcessing(null);
-      return;
-    }
-  };
 
   if (!open) return null;
 
