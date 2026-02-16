@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
+import { useQuery } from '@tanstack/react-query';
+
 import dayjs from 'dayjs';
 import { TokenState } from '../states/token.state';
 import {
@@ -66,11 +68,17 @@ export const usePayzlip = () => {
     return ret;
   };
 
+  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => getProjects(),
+    enabled: accessToken !== null,
+  });
+
   const addMissingProjectsToMyProjects = async (
     reports: PayzlipReportResponse,
   ) => {
     const reportedProjects = new Set<string>();
-    const allProjects = (await getProjects())?.projects;
+    const allProjects = (await projects)?.projects;
 
     Object.values(reports).forEach((day) => {
       if (!day?.reports?.length) return;
@@ -207,7 +215,8 @@ export const usePayzlip = () => {
 
   return {
     payzlipReady: accessToken !== null,
-    getProjects,
+    projects,
+    isLoadingProjects,
     getReports,
     reports,
     payzlipReportedDays,

@@ -62,6 +62,7 @@ export const VerifyDaysDialog = ({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!open) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (currentSelectedRow + 1 < unverifiedDays.length) {

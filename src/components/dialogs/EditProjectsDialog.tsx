@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useAtom } from 'jotai';
 import { usePayzlip } from '../../hooks/usePayzlip';
 import {
@@ -23,13 +22,7 @@ export const EditProjectsDialog = ({
   onOpenChange,
 }: EditProjectsDialogProps) => {
   const [myProjects, setMyProjects] = useAtom(MyProjectsState);
-  const { payzlipReady, getProjects } = usePayzlip();
-
-  const { data: projects, isLoading } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => getProjects(),
-    enabled: payzlipReady,
-  });
+  const { projects, isLoadingProjects } = usePayzlip();
 
   const handleChange = (project: Project) => {
     if (!myProjects || !myProjects.find((p) => p.id === project.id)) {
@@ -50,7 +43,7 @@ export const EditProjectsDialog = ({
         </DialogHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto">
-            {isLoading ? (
+            {isLoadingProjects ? (
               <span>Loading...</span>
             ) : (
               projects.projects
@@ -77,10 +70,7 @@ export const EditProjectsDialog = ({
         </div>
         <DialogFooter className="bg-stone-500 p-4">
           <DialogClose asChild>
-            <Button
-              className="min-w-[100px]"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button className="min-w-25" onClick={() => onOpenChange(false)}>
               Close
             </Button>
           </DialogClose>
