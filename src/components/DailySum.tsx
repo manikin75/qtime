@@ -27,8 +27,14 @@ export const DailySum = ({
     [date],
   );
   const reportedSum = reports[shortDate]?.workedHours;
-  const isVerified = payzlipVerifiedDays?.includes(shortDate);
-  const isReported = payzlipReportedDays?.includes(shortDate);
+  const isVerified = useMemo(
+    () => payzlipVerifiedDays?.includes(shortDate),
+    [payzlipVerifiedDays, shortDate],
+  );
+  const isReported = useMemo(
+    () => payzlipReportedDays?.includes(shortDate),
+    [payzlipReportedDays, shortDate],
+  );
 
   return (
     <div
