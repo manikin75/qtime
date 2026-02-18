@@ -95,7 +95,8 @@ export const useCalendar = ({
       // Reduce reports to projectId -> hours, in case of overlapping reports for the same day
       const hoursPerProject = day.reports.reduce<Record<string, number>>(
         (acc, report) => {
-          acc[report.projectId] = (acc[report.projectId] ?? 0) + report.hours;
+          acc[report.projectId] =
+            (acc[report.projectId] ?? 0) + report.totalHours;
           return acc;
         },
         {},
@@ -104,6 +105,8 @@ export const useCalendar = ({
         setValue(projectId, d, hours);
       });
     });
+    // console.log({ reportedDays });
+    // console.log({ values });
   }, [payzlipReady, reportedDays]); // Endless re-renders if adding setValue, thank you very much typescript
 
   const rowSum = (projectId: string) =>
