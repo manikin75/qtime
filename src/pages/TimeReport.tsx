@@ -16,7 +16,7 @@ import {
   CaretRightIcon,
 } from '@phosphor-icons/react';
 import { format } from 'date-fns';
-import { MyProjectsState, DefaultProject } from '../states/myProjects.state';
+import { MyProjectsState } from '../states/myProjects.state';
 import { TokenState } from '../states/token.state';
 // import { type Project } from '../types/project';
 
