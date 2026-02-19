@@ -164,9 +164,17 @@ export const useCalendar = ({
       reportedDays &&
       reportedDays[format(date, 'yyyy-MM-dd') as PayzlipDate]?.reports;
     if (reportsToDelete?.length) {
+      let success = 0;
       await Promise.all(
-        reportsToDelete.map(async (d) => await deleteReport(d.projectId, date)),
+        reportsToDelete.map(async (d) => {
+          const ret = await deleteReport(d.projectId, date);
+          if (ret) success++;
+        }),
       );
+      if (success !== reportsToDelete.length) {
+        setUploadingDate(null);
+        throw new Error('Failed to delete some reports');
+      }
     }
     await reportHoursForDate(date, hours);
     queryClient.invalidateQueries({ queryKey: ['reports', year, month] });

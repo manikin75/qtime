@@ -203,20 +203,22 @@ export const usePayzlip = () => {
       (d) => d[0] === formattedDate,
     )[0];
     if (!dayReports) return;
-    const report = dayReports[1]?.reports.find(
+    const projectReports = dayReports[1]?.reports.filter(
       (rep) => rep.projectId === projectId,
     );
-    if (!report) return;
+    if (!projectReports.length) return;
 
     try {
       await apiDelete(
         `/v1/_/reporting/user/${USER_ID}/presence/reports`,
         accessToken,
-        { reportIds: [report.id] },
+        { reportIds: projectReports.map((pr) => pr.id) },
       );
+      return true;
     } catch (e) {
       console.log(e);
       toast.error('Failed to delete report from payzlip');
+      return false;
     }
   };
 
