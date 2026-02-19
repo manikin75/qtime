@@ -40,7 +40,7 @@ export const DailySum = ({
     <div
       key={`sum-${date.toISOString()}`}
       className={cn(
-        'bg-stone-600 rounded-md mt-2',
+        'bg-stone-600 rounded-md mt-2 flex items-center justify-center',
         !isVerified && sum && 'cursor-pointer',
         isVerified
           ? 'border border-green-500 bg-green-700'
@@ -88,9 +88,7 @@ export const DailySum = ({
                     : 'No hours entered for this day'
           }
         >
-          <div className="text-center font-semibold  px-2 pt-1">
-            {sum || '-'}
-          </div>
+          <div className="text-center font-semibold">{sum || '-'}</div>
         </WithTooltip>
       )}
     </div>

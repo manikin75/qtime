@@ -1,4 +1,4 @@
-type ProjectId = string;
+type ProjectId = string | null;
 
 type Project = {
   id: ProjectId;

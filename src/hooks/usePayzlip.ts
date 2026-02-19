@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { useQuery } from '@tanstack/react-query';
-
+import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { TokenState } from '../states/token.state';
 import {
@@ -17,7 +17,7 @@ import {
   type PayzlipReportUploadPayload,
   type Project,
 } from '../types/project';
-import { MyProjectsState } from '../states/myProjects.state';
+import { MyProjectsState, DefaultProject } from '../states/myProjects.state';
 
 const ISO_STRING = 'YYYY-MM-DDTHH:mm:ss.SSS';
 const ORGANIZATION_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
@@ -60,10 +60,17 @@ export const usePayzlip = () => {
 
   const getProjects = async () => {
     if (!accessToken) throw new Error('No access token');
-    const ret = await apiGet(
-      `/v1/organizations/${ORGANIZATION_ID}/client-settings`,
-      accessToken,
-    );
+    let ret;
+    try {
+      ret = await apiGet(
+        `/v1/organizations/${ORGANIZATION_ID}/client-settings`,
+        accessToken,
+      );
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to get projects from payzlip');
+      return;
+    }
 
     return ret;
   };
@@ -101,6 +108,12 @@ export const usePayzlip = () => {
         return { ...project, id: projectId };
       })
       .filter(Boolean);
+
+    if (!myProjects.find((p) => p.id === null)) {
+      // Default project ("Ordinarie arbetstid") must be first
+      projectsToAdd.unshift(DefaultProject);
+    }
+
     setMyProjects((prev) => [...prev, ...projectsToAdd]);
   };
 
@@ -116,11 +129,17 @@ export const usePayzlip = () => {
       lang: 'sv',
     };
 
-    const ret: PayzlipReportResponse = await apiGet(
-      `/v1/_/reporting/user/${USER_ID}/activities?${serialize(query)}`,
-      accessToken,
-    );
-
+    let ret: PayzlipReportResponse;
+    try {
+      ret = await apiGet(
+        `/v1/_/reporting/user/${USER_ID}/activities?${serialize(query)}`,
+        accessToken,
+      );
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to get reports from payzlip');
+      throw e;
+    }
     setReports(ret);
 
     const datesWithReports = Object.entries(ret)
@@ -147,32 +166,32 @@ export const usePayzlip = () => {
 
     // const fixedReport = transformReport(date, projectId, hours);
     // if (!fixedReport) return;
-    let start = 8;
+    let start = dayjs(date).set('hour', 8).startOf('hour');
     const itemsToUpload: PayzlipReportUploadPayload[] = [];
     items?.forEach((d) => {
       itemsToUpload.push({
         projectId: d.projectId,
-        startTime: dayjs(date)
-          .set('hour', start)
-          .startOf('hour')
-          .format(ISO_STRING),
-        endTime: dayjs(date)
-          .set('hour', start + d.hours)
-          .startOf('hour')
-          .format(ISO_STRING),
+        startTime: start.format(ISO_STRING),
+        endTime: start.add(d.hours, 'hour').format(ISO_STRING),
         comment: '',
         timeCode: 'normal',
       });
-      start += d.hours;
+      start = start.add(d.hours, 'hour');
     });
 
-    const res = await apiPost(
-      `/v1/_/reporting/user/${USER_ID}/presence/reports`,
-      accessToken,
-      { items: itemsToUpload },
-    );
+    try {
+      const res = await apiPost(
+        `/v1/_/reporting/user/${USER_ID}/presence/reports`,
+        accessToken,
+        { items: itemsToUpload },
+      );
+      console.log({ res });
+      toast.success('Reported hours to payzlip');
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to send report to payzlip');
+    }
 
-    console.log({ res });
     return;
   };
 
@@ -189,13 +208,16 @@ export const usePayzlip = () => {
     );
     if (!report) return;
 
-    const res = await apiDelete(
-      `/v1/_/reporting/user/${USER_ID}/presence/reports`,
-      accessToken,
-      { reportIds: [report.id] },
-    );
-
-    return res;
+    try {
+      await apiDelete(
+        `/v1/_/reporting/user/${USER_ID}/presence/reports`,
+        accessToken,
+        { reportIds: [report.id] },
+      );
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to delete report from payzlip');
+    }
   };
 
   const verifyDays = async (dates: PayzlipDate[]) => {
@@ -204,12 +226,18 @@ export const usePayzlip = () => {
       throw new Error('Expected dates to verify');
     }
 
-    const res = await apiPatch(
-      `/v1/_/reporting/user/${USER_ID}/verify-days`,
-      accessToken,
-      { dates },
-    );
-
+    let res = 500;
+    try {
+      res = await apiPatch(
+        `/v1/_/reporting/user/${USER_ID}/verify-days`,
+        accessToken,
+        { dates },
+      );
+      toast.success('Verified days on payzlip');
+    } catch (e) {
+      console.log(e);
+      toast.error('Failed to verify days on payzlip');
+    }
     return res;
   };
 

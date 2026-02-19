@@ -68,10 +68,10 @@ export const useCalendar = ({
   const undoStack = useRef<Change[][]>([]);
   const redoStack = useRef<Change[][]>([]);
 
-  const getValue = (projectId: string, date: Date) =>
+  const getValue = (projectId: ProjectId, date: Date) =>
     values[`${projectId}_${date.toDateString()}`] ?? 0;
 
-  const setValue = (projectId: string, date: Date, value: number) => {
+  const setValue = (projectId: ProjectId, date: Date, value: number) => {
     const key: CellKey = `${projectId}_${date.toDateString()}`;
     setValues((prev) => ({ ...prev, [key]: value }));
   };
@@ -109,7 +109,7 @@ export const useCalendar = ({
     // console.log({ values });
   }, [payzlipReady, reportedDays]); // Endless re-renders if adding setValue, thank you very much typescript
 
-  const rowSum = (projectId: string) =>
+  const rowSum = (projectId: ProjectId) =>
     daysInMonth.reduce((sum, d) => sum + getValue(projectId, d), 0);
 
   const columnSum = (date: Date) =>

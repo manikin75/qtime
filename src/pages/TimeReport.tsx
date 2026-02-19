@@ -8,6 +8,7 @@ import { AbsenceDialog } from '../components/dialogs/AbsenceDialog';
 import { EditProjectsDialog } from '../components/dialogs/EditProjectsDialog';
 import { VerifyDaysDialog } from '../components/dialogs/VerifyDaysDialog';
 import { WelcomeDialog } from '../components/dialogs/WelcomeDialog';
+import { ToastContainer, Bounce } from 'react-toastify';
 import {
   PlusIcon,
   PokerChipIcon,
@@ -15,7 +16,7 @@ import {
   CaretRightIcon,
 } from '@phosphor-icons/react';
 import { format } from 'date-fns';
-import { MyProjectsState } from '../states/myProjects.state';
+import { MyProjectsState, DefaultProject } from '../states/myProjects.state';
 import { TokenState } from '../states/token.state';
 // import { type Project } from '../types/project';
 
@@ -58,6 +59,13 @@ export const TimeReport = () => {
 
   return (
     <Layout>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        theme={'dark'}
+        transition={Bounce}
+      />
       <div className="mb-10 mt-4 flex flex-col items-center justify-start h-full">
         <div className="flex flex-row justify-between w-full">
           <Button

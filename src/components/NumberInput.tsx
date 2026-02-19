@@ -58,8 +58,20 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     };
 
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.value.length > 1 && e.target.value[0] === '0') {
-        e.target.value = e.target.value.slice(1);
+      console.log('value:', e.target.value);
+      if (e.target.value.includes('.')) {
+        e.target.value = String(+e.target.value);
+        console.log('comma:', e.target.value, +e.target.value || 0);
+        onChange(+e.target.value || 0);
+        return;
+      }
+      if (e.target.value.length > 1) {
+        if (e.target.value.includes(',')) {
+          e.target.value = String(e.target.value + 0.5).replace(',', '.');
+          console.log('comma:', e.target.value);
+        } else {
+          e.target.value = e.target.value.slice(1);
+        }
       }
       onChange(parseInt(e.target.value) || 0);
     };
@@ -70,6 +82,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         type="number"
         min={0}
         max={12}
+        step={0.1}
         value={value}
         onChange={handleOnChange}
         onFocus={(e) => {

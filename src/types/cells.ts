@@ -1,4 +1,4 @@
-type ProjectId = string;
+import { type ProjectId } from './project';
 
 type Change = {
   row: ProjectId;
