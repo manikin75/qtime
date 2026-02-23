@@ -1,6 +1,8 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from './components/WithTooltip';
+import { TanStackDevtools } from '@tanstack/react-devtools';
+import { hotkeysDevtoolsPlugin } from '@tanstack/react-hotkeys-devtools';
 import { TimeReport } from './pages/TimeReport';
 import './dist.css';
 
@@ -16,6 +18,7 @@ function App() {
           </Routes>
         </Router>
       </TooltipProvider>
+      <TanStackDevtools plugins={[hotkeysDevtoolsPlugin()]} />
     </QueryClientProvider>
   );
 }

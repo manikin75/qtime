@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useHotkey, useHotkeySequence } from '@tanstack/react-hotkeys';
 import {
   useNationalHolidays,
   type NationalHoliday,
@@ -277,81 +278,82 @@ export const useCalendar = ({
     return ABSENCE_KEY[(idx + 1) % ABSENCE_KEY.length];
   };
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      setShiftKey(e.shiftKey);
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        if (!selection) return;
+  // Copy
+  useHotkey('Mod+C', () => {
+    if (!selection) return;
 
-        const r1 = Math.min(
-          projectIdToRow(selection.start.row),
-          projectIdToRow(selection.end.row),
-        );
-        const r2 = Math.max(
-          projectIdToRow(selection.start.row),
-          projectIdToRow(selection.end.row),
-        );
-        const c1 = Math.min(selection.start.col, selection.end.col);
-        const c2 = Math.max(selection.start.col, selection.end.col);
+    const r1 = Math.min(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
+    const r2 = Math.max(
+      projectIdToRow(selection.start.row),
+      projectIdToRow(selection.end.row),
+    );
+    const c1 = Math.min(selection.start.col, selection.end.col);
+    const c2 = Math.max(selection.start.col, selection.end.col);
 
-        clipboardRef.current = [];
+    clipboardRef.current = [];
 
-        for (let r = r1; r <= r2; r++) {
-          const row: number[] = [];
-          for (let c = c1; c <= c2; c++) {
-            row.push(getValue(projects[r].id, daysInMonth[c]));
-          }
-          clipboardRef.current.push(row);
-        }
+    for (let r = r1; r <= r2; r++) {
+      const row: number[] = [];
+      for (let c = c1; c <= c2; c++) {
+        row.push(getValue(projects[r].id, daysInMonth[c]));
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-        if (!activeCell) return;
+      clipboardRef.current.push(row);
+    }
+  });
 
-        const data = clipboardRef.current;
-        if (!data.length) return;
+  // Paste
+  useHotkey('Mod+V', () => {
+    if (!activeCell) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+    const data = clipboardRef.current;
+    if (!data.length) return;
 
-        const changes: Change[] = [];
-        data.forEach((row, rOffset) => {
-          row.forEach((value, cOffset) => {
-            const r = projectIdToRow(activeCell.row) + rOffset;
-            const c = activeCell.col + cOffset;
+    const changes: Change[] = [];
+    data.forEach((row, rOffset) => {
+      row.forEach((value, cOffset) => {
+        const r = projectIdToRow(activeCell.row) + rOffset;
+        const c = activeCell.col + cOffset;
 
-            if (r < projects.length && c < daysInMonth.length) {
-              // setValue(projects[r].id, daysInMonth[c], value);
-              changes.push({
-                row: projects[r].id,
-                col: c,
-                prev: getValue(projects[r].id, daysInMonth[c]),
-                next: value,
-              });
-            }
-          });
-        });
-        applyChanges(changes);
-        recordChanges(changes);
-        return false;
-      }
-
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (!selection && !activeCell) return;
-        e.preventDefault();
-
-        const changes: Change[] = [];
-        forEachSelectedCell((r, c) => {
-          // setValue(projects[r].id, daysInMonth[c], 0);
+        if (r < projects.length && c < daysInMonth.length) {
           changes.push({
             row: projects[r].id,
             col: c,
             prev: getValue(projects[r].id, daysInMonth[c]),
-            next: 0,
+            next: value,
           });
-        });
-        applyChanges(changes);
-        recordChanges(changes);
-      }
+        }
+      });
+    });
+    applyChanges(changes);
+    recordChanges(changes);
+  });
+
+  useHotkeySequence(['Delete', 'Backspace'], () => {
+    if (!selection && !activeCell) return;
+
+    const changes: Change[] = [];
+    forEachSelectedCell((r, c) => {
+      // setValue(projects[r].id, daysInMonth[c], 0);
+      changes.push({
+        row: projects[r].id,
+        col: c,
+        prev: getValue(projects[r].id, daysInMonth[c]),
+        next: 0,
+      });
+    });
+    applyChanges(changes);
+    recordChanges(changes);
+  });
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      setShiftKey(e.shiftKey);
+
+      // if (e.key === 'Delete' || e.key === 'Backspace') {
+      // }
 
       if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.match(/^[0-9]$/)) {
         const value = parseInt(e.key);
