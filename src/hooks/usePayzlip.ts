@@ -72,7 +72,7 @@ export const usePayzlip = () => {
       return;
     }
 
-    return ret;
+    return ret?.projects as Project[];
   };
 
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
@@ -85,7 +85,7 @@ export const usePayzlip = () => {
     reports: PayzlipReportResponse,
   ) => {
     const reportedProjects = new Set<string>();
-    const allProjects = (await projects)?.projects;
+    const allProjects = await getProjects();
 
     Object.values(reports).forEach((day) => {
       if (!day?.reports?.length) return;
@@ -98,7 +98,7 @@ export const usePayzlip = () => {
     });
 
     const missingProjects = [...reportedProjects].filter(
-      (projectId) => !myProjects.some((p) => p.id === projectId),
+      (projectId) => !myProjects?.some((p) => p.id === projectId),
     );
 
     const projectsToAdd = missingProjects
@@ -107,9 +107,9 @@ export const usePayzlip = () => {
         if (!project) return null;
         return { ...project, id: projectId };
       })
-      .filter(Boolean);
+      .filter(Boolean) as Project[];
 
-    if (!myProjects.find((p) => p.id === null)) {
+    if (!myProjects?.find((p) => p.id === null)) {
       // Default project ("Ordinarie arbetstid") must be first
       projectsToAdd.unshift(DefaultProject);
     }

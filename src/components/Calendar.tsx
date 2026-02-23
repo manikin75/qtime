@@ -158,14 +158,14 @@ export const Calendar = ({
           <>
             {/* Project name (sticky) */}
             <div
-              key={project.id}
+              key={project.id || 'default'}
               className={cn(
                 'left-0 z-10 flex-col flex items-start font-sm rounded-sm ps-2 pt-1 relative',
                 // activeCell?.row === project.id && 'bg-stone-700',
                 isSelected(project.id, activeCell?.col || 0) && 'bg-stone-700',
               )}
             >
-              <span className="w-[390px] flex items-start hover:bg-stone-800 hover:overflow-auto hover:z-10 hover:w-auto hover:absolute whitespace-nowrap overflow-ellipsis overflow-hidden">
+              <span className="w-97.5 flex items-start hover:bg-stone-800 hover:overflow-auto hover:z-10 hover:w-auto hover:absolute whitespace-nowrap overflow-ellipsis overflow-hidden">
                 {project.name}
               </span>
               <div
@@ -218,7 +218,7 @@ export const Calendar = ({
                   onFocus={() => onFocus(project.id, colIndex)}
                   onNavigate={(dir) => onNavigate(rowIndex, colIndex, dir)}
                   onSelectExtend={(dir) => onSelectExtend(dir)}
-                  className="w-[26px] text-center border rounded border-none"
+                  className="w-6.5 text-center border rounded border-none"
                   disabled={payzlipVerifiedDays?.includes(
                     format(date, 'yyyy-MM-dd') as PayzlipDate,
                   )}

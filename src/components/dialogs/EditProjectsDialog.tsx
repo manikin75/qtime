@@ -46,12 +46,12 @@ export const EditProjectsDialog = ({
             {isLoadingProjects ? (
               <span>Loading...</span>
             ) : (
-              projects.projects
-                // .filter((p) => !p.archived)
+              projects
+                ?.filter((p) => !p.archived)
                 .map((project: Project) => (
                   <div
-                    key={project.id}
-                    className="flex flex-row gap-2 justify-start items-start hover:bg-stone-200 px-1 rounded-md cursor-pointer"
+                    key={project.id || 'default'}
+                    className="flex flex-row gap-2 justify-start items-start hover:bg-stone-600 px-1 rounded-md cursor-pointer"
                     onClick={() => handleChange(project)}
                   >
                     <input
@@ -61,8 +61,9 @@ export const EditProjectsDialog = ({
                         myProjects?.filter((p) => p.id === project.id).length >
                         0
                       }
+                      onChange={() => {}}
                     />
-                    <div key={project.id}>{project.name}</div>
+                    <div>{project.name}</div>
                   </div>
                 ))
             )}

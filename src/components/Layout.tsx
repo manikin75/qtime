@@ -1,16 +1,8 @@
-import {
-  ArrowLineRightIcon,
-  ArrowSquareLeftIcon,
-  ArrowSquareRightIcon,
-  ArrowSquareDownIcon,
-  ArrowSquareUpIcon,
-  ArrowFatUpIcon,
-  ControlIcon,
-} from '@phosphor-icons/react';
+import { formatForDisplay } from '@tanstack/react-hotkeys';
 
 const KeyboardShortcut = ({ children }: { children: React.ReactNode }) => {
   return (
-    <span className="text-white text-[0.75em] border-white border px-1">
+    <span className="text-white text-[0.85em] border-white border p-1 py-0.5 rounded-sm">
       {children}
     </span>
   );
@@ -19,7 +11,7 @@ const KeyboardShortcut = ({ children }: { children: React.ReactNode }) => {
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col justify-center min-h-screen bg-[#232222] text-white w-screen">
-      <div className="h-auto w-[1440px] flex flex-col m-auto justify-center items-center">
+      <div className="h-auto w-360 flex flex-col m-auto justify-center items-center">
         <header className="flex flex-row gap-x-2 items-center justify-left h-10 w-full text-center border-b border-white">
           <div className="text-left">
             <h1 className="text-2xl font-bold">QTime</h1>
@@ -31,34 +23,35 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <footer className="flex flex-col items-center justify-center h-2 w-full text-center border-t border-white mt-20">
           <div className="text-xs mt-8 flex flex-row gap-8 justify-between">
             <div className="flex flex-row gap-1 items-center">
-              <ArrowLineRightIcon size={18} /> Jump with tab
+              <KeyboardShortcut>{formatForDisplay('Tab')}</KeyboardShortcut>{' '}
+              Jump with tab
             </div>
             <div className="flex flex-row gap-1 items-center">
-              <ArrowSquareLeftIcon size={18} />
-              <ArrowSquareRightIcon size={18} />
-              <ArrowSquareDownIcon size={18} />
-              <ArrowSquareUpIcon size={18} />
+              <KeyboardShortcut>{formatForDisplay('Arrows')}</KeyboardShortcut>
               <span>navigate between cells</span>
             </div>
             <div className="flex flex-row gap-1 items-center">
-              <ArrowFatUpIcon size={18} />
-              <ArrowSquareRightIcon size={18} />
+              {/* <ArrowFatUpIcon size={18} />
+              <ArrowSquareRightIcon size={18} /> */}
+              <KeyboardShortcut>
+                {formatForDisplay('Shift+Arrows')}
+              </KeyboardShortcut>
               <span>select range of cells</span>
             </div>
             <div className="flex flex-row gap-1 items-center">
-              <ControlIcon size={18} />
-              <KeyboardShortcut>C</KeyboardShortcut> /{' '}
-              <KeyboardShortcut>V</KeyboardShortcut>
+              {/* <ControlIcon size={18} /> */}
+              <KeyboardShortcut>
+                {formatForDisplay('Mod+C')}
+              </KeyboardShortcut> /{' '}
+              <KeyboardShortcut>{formatForDisplay('Mod+V')}</KeyboardShortcut>
               <span>copy/paste selected cells</span>
             </div>
             <div className="flex flex-row gap-1 items-center">
-              <ControlIcon size={18} />
-              <KeyboardShortcut>Z</KeyboardShortcut>
+              <KeyboardShortcut>{formatForDisplay('Mod+Z')}</KeyboardShortcut>
               undo
             </div>
             <div className="flex flex-row gap-1 items-center">
-              <ControlIcon size={18} />
-              <KeyboardShortcut>A</KeyboardShortcut>
+              <KeyboardShortcut>{formatForDisplay('Mod+A')}</KeyboardShortcut>
               <span>mark absence</span>
             </div>
             <div className="flex flex-row gap-1 items-center">

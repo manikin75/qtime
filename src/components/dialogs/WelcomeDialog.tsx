@@ -50,7 +50,7 @@ export const WelcomeDialog = ({ open, onOpenChange }: WelcomeDialogProps) => {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button className="min-w-[100px]" onClick={handleCancel}>
+            <Button className="min-w-25" onClick={handleCancel}>
               Close
             </Button>
           </DialogClose>
