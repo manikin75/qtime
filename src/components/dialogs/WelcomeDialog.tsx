@@ -48,7 +48,7 @@ export const WelcomeDialog = ({ open, onOpenChange }: WelcomeDialogProps) => {
           </p>
         </div>
 
-        <DialogFooter className="bg-stone-500 p-4">
+        <DialogFooter>
           <DialogClose asChild>
             <Button className="min-w-[100px]" onClick={handleCancel}>
               Close

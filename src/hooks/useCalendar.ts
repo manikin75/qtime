@@ -17,7 +17,7 @@ import {
 import type { Change, CellKey, CellPos, Direction } from '../types/cells';
 // import { type PayzlipReportDay } from '../types/project';
 
-const CellValueAtom = atomWithStorage<Record<CellKey, number>>(
+export const CellValueAtom = atomWithStorage<Record<CellKey, number>>(
   'cellValues',
   {},
 );

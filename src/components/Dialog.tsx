@@ -41,7 +41,7 @@ const DialogContent = ({
       <DialogPrimitive.Content
         aria-describedby={undefined}
         className={cn(
-          'p-dialog bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-default relative z-50 w-full max-w-lg gap-4 border shadow-lg duration-200',
+          'p-dialog bg-stone-800 text-stone-100 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-default relative z-50 w-full max-w-lg gap-4 border border-stone-500 shadow-lg duration-200',
           className,
         )}
         {...restProps}
@@ -126,7 +126,7 @@ const DialogHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'pb-dialog-header-bottom border-q-brown flex flex-col border-b px-0 text-left',
+      'pb-dialog-header-bottom border-stone-600 flex flex-col border-b px-0 text-left',
       className,
     )}
     {...restProps}
@@ -140,6 +140,7 @@ const DialogFooter = ({
   <div
     className={cn(
       'p-dialog-bottom pb-dialog-footer-bottom pt-dialog-footer-top flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+      'bg-stone-900 p-3 border-t border-stone-600',
       className,
     )}
     {...restProps}

@@ -68,7 +68,7 @@ export const EditProjectsDialog = ({
             )}
           </div>
         </div>
-        <DialogFooter className="bg-stone-500 p-4">
+        <DialogFooter>
           <DialogClose asChild>
             <Button className="min-w-25" onClick={() => onOpenChange(false)}>
               Close

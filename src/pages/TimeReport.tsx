@@ -9,6 +9,7 @@ import { AbsenceDialog } from '../components/dialogs/AbsenceDialog';
 import { EditProjectsDialog } from '../components/dialogs/EditProjectsDialog';
 import { VerifyDaysDialog } from '../components/dialogs/VerifyDaysDialog';
 import { WelcomeDialog } from '../components/dialogs/WelcomeDialog';
+import { YearlySummaryDialog } from '../components/dialogs/YearlySummaryDialog';
 import { ToastContainer, Bounce } from 'react-toastify';
 import {
   PlusIcon,
@@ -34,6 +35,7 @@ export const TimeReport = () => {
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
   const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
+  const [yearlySummaryDialogOpen, setYearlySummaryDialogOpen] = useState(false);
   const [welcomeDialogOpen, setWelcomeDialogOpen] = useAtom(
     ShowWelcomeDialogAtom,
   );
@@ -81,7 +83,10 @@ export const TimeReport = () => {
             <Button size="sm" className="" onClick={() => changeMonth('left')}>
               <CaretLeftIcon />
             </Button>
-            <h2 className="font-bold ">
+            <h2
+              className="font-bold"
+              onClick={() => setYearlySummaryDialogOpen(true)}
+            >
               {format(new Date(year, month, 1), 'MMMM yyyy')}
             </h2>
             <Button size="sm" className="" onClick={() => changeMonth('right')}>
@@ -125,6 +130,11 @@ export const TimeReport = () => {
       <WelcomeDialog
         open={welcomeDialogOpen}
         onOpenChange={setWelcomeDialogOpen}
+      />
+      <YearlySummaryDialog
+        year={year}
+        open={yearlySummaryDialogOpen}
+        onOpenChange={setYearlySummaryDialogOpen}
       />
     </Layout>
   );

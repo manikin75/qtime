@@ -189,11 +189,6 @@ export const Calendar = ({
                   isSelected(project.id, colIndex) && 'border-white! shadow',
                   // isToday(date) && 'bg-cyan-900',
                 )}
-                // style={{
-                //   boxShadow: isSelected(project.id, colIndex)
-                //     ? '0 0 5px #fff'
-                //     : '',
-                // }}
                 onMouseDown={() => {
                   setIsDragging(true);
                   setSelection({

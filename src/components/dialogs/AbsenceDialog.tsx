@@ -30,7 +30,7 @@ export const AbsenceDialog = ({ open, onOpenChange }: EditTokenDialogProps) => {
           Absence data is stored locally in localStorage, and never sent to the
           server.
         </div>
-        <DialogFooter className="bg-stone-500 p-4">
+        <DialogFooter>
           <DialogClose asChild>
             <Button className="" onClick={handleCancel}>
               Close

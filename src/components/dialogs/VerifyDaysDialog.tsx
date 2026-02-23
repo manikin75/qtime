@@ -121,7 +121,7 @@ export const VerifyDaysDialog = ({
                   key={date}
                   className={cn(
                     'flex gap-2 justify-start items-start px-1 rounded-md cursor-pointer',
-                    i === currentSelectedRow && 'bg-stone-200',
+                    i === currentSelectedRow && 'bg-cyan-800',
                   )}
                   onMouseEnter={() => setCurrentSelectedRow(i)}
                   onClick={() => {
@@ -140,7 +140,7 @@ export const VerifyDaysDialog = ({
                     />
                   </td>
                   <td className="w-14">{format(date, 'd MMM')}</td>
-                  <td className="w-8 text-sm mt-1 text-stone-600">
+                  <td className="w-8 text-sm mt-1 text-stone-300">
                     {format(date, 'EE')}
                   </td>
                   <td>{reports[date]?.workedHours || 0} h</td>
@@ -150,7 +150,7 @@ export const VerifyDaysDialog = ({
           </table>
           <div className="flex flex-row gap-4"></div>
         </div>
-        <DialogFooter className="bg-stone-500 p-4 relative">
+        <DialogFooter className=" relative">
           <div className="absolute left-4 top-6 text-white">{processing}</div>
           <DialogClose>
             <Button className="min-w-25" onClick={handleCancel}>
