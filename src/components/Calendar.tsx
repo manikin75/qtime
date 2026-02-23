@@ -34,7 +34,7 @@ export const Calendar = ({
     inputRefs,
     activeCell,
     setActiveCell,
-    setValue,
+    updateSelectedCellsValue,
     getValue,
     rowSum,
     columnSum,
@@ -79,6 +79,10 @@ export const Calendar = ({
         ?.focus();
     }, 100);
   }, [projects]);
+
+  const onChange = (value: number) => {
+    updateSelectedCellsValue(value);
+  };
 
   return (
     <div className="my-10 overflow-x-auto w-full">
@@ -179,17 +183,17 @@ export const Calendar = ({
                 id={`${project.id}-${date.toISOString()}`}
                 className={cn(
                   'flex justify-center p-1  m-1/2 rounded-md border border-stone-600 select-none',
-                  isSelected(project.id, colIndex) && 'border-white! shadow',
                   isMultiSelected() && 'border-dotted',
                   (isNationalHoliday(date) || isWeekend(date)) &&
                     'border-stone-700 text-stone-700',
+                  isSelected(project.id, colIndex) && 'border-white! shadow',
                   // isToday(date) && 'bg-cyan-900',
                 )}
-                style={{
-                  boxShadow: isSelected(project.id, colIndex)
-                    ? '0 0 5px #fff'
-                    : '',
-                }}
+                // style={{
+                //   boxShadow: isSelected(project.id, colIndex)
+                //     ? '0 0 5px #fff'
+                //     : '',
+                // }}
                 onMouseDown={() => {
                   setIsDragging(true);
                   setSelection({
@@ -215,7 +219,7 @@ export const Calendar = ({
                     inputRefs.current[rowIndex][colIndex] = el!;
                   }}
                   value={getValue(project.id, date)}
-                  onChange={(v) => setValue(project.id, date, v)}
+                  onChange={(v) => onChange(v)}
                   onFocus={() => onFocus(project.id, colIndex)}
                   onNavigate={(dir) => onNavigate(rowIndex, colIndex, dir)}
                   onSelectExtend={(dir) => onSelectExtend(dir)}
@@ -228,7 +232,7 @@ export const Calendar = ({
             ))}
 
             {/* Row sum */}
-            <div className="text-center font-semibold ms-2 pt-1.25 bg-stone-700 rounded-md">
+            <div className="text-center w-12 font-semibold ms-2 pt-1.25 bg-stone-700 rounded-md">
               {rowSum(project.id)}
             </div>
           </>

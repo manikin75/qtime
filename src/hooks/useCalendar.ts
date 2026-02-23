@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { useHotkey, useHotkeySequence } from '@tanstack/react-hotkeys';
+import { useHotkey, useKeyHold } from '@tanstack/react-hotkeys';
 import {
   useNationalHolidays,
   type NationalHoliday,
@@ -59,7 +59,6 @@ export const useCalendar = ({
     end: CellPos;
   } | null>(null);
   const [uploadingDate, setUploadingDate] = useState<number | null>(null);
-  const [shiftKey, setShiftKey] = useState(false);
   const inputRefs = useRef<
     HTMLInputElement[][] // [row][col]
   >([]);
@@ -68,6 +67,8 @@ export const useCalendar = ({
 
   const undoStack = useRef<Change[][]>([]);
   const redoStack = useRef<Change[][]>([]);
+
+  const isShiftHeld = useKeyHold('Shift');
 
   const getValue = (projectId: ProjectId, date: Date) =>
     values[`${projectId}_${date.toDateString()}`] ?? 0;
@@ -331,7 +332,7 @@ export const useCalendar = ({
     recordChanges(changes);
   });
 
-  useHotkeySequence(['Delete', 'Backspace'], () => {
+  useHotkey('Backspace', () => {
     if (!selection && !activeCell) return;
 
     const changes: Change[] = [];
@@ -348,101 +349,73 @@ export const useCalendar = ({
     recordChanges(changes);
   });
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      setShiftKey(e.shiftKey);
+  // Undo
+  useHotkey('Mod+Z', () => {
+    const last = undoStack.current.pop();
+    if (!last) return;
 
-      // if (e.key === 'Delete' || e.key === 'Backspace') {
-      // }
+    last.forEach(({ row, col, prev }) => {
+      setValue(projects[projectIdToRow(row)].id, daysInMonth[col], prev);
+    });
 
-      if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.match(/^[0-9]$/)) {
-        const value = parseInt(e.key);
-        if (!activeCell || !selection || !isMultiSelected() || value > 9)
-          return;
-        e.preventDefault();
+    redoStack.current.push(last);
+  });
 
-        const changes: Change[] = [];
-        forEachSelectedCell((r, c) => {
-          // setValue(projects[r].id, daysInMonth[c], value);
-          changes.push({
-            row: projects[r].id,
-            col: c,
-            prev: getValue(projects[r].id, daysInMonth[c]),
-            next: value,
-          });
+  // Absence
+  useHotkey('Mod+A', () => {
+    if (!activeCell) return;
+
+    const baseKey = getAbsenceKey(year, month, activeCell.col + 1);
+    const current = absence[baseKey] ?? null;
+    const valueToApply = nextAbsence(current);
+
+    if (valueToApply === null) {
+      setAbsence((prev) => {
+        const next = { ...prev };
+        forEachSelectedCell((_, col) => {
+          const key = getAbsenceKey(year, month, col + 1);
+          delete next[key];
         });
-        applyChanges(changes);
-        recordChanges(changes);
-      }
+        return next;
+      });
+      return;
+    }
 
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
+    setAbsence((prev) => {
+      const next = { ...prev };
 
-        const last = undoStack.current.pop();
-        if (!last) return;
+      forEachSelectedCell((_, col) => {
+        const key = getAbsenceKey(year, month, col + 1);
+        next[key] = valueToApply;
+      });
 
-        last.forEach(({ row, col, prev }) => {
-          setValue(projects[projectIdToRow(row)].id, daysInMonth[col], prev);
-        });
+      return next;
+    });
+  });
 
-        redoStack.current.push(last);
-      }
+  const updateSelectedCellsValue = (value: number) => {
+    // const value = parseInt(e.key);
+    if (!activeCell || value > 9) return;
 
-      // if ((e.shiftKey && e.key === '!')) {
-      // }
+    const changes: Change[] = [];
+    forEachSelectedCell((r, c) => {
+      // setValue(projects[r].id, daysInMonth[c], value);
+      changes.push({
+        row: projects[r].id,
+        col: c,
+        prev: getValue(projects[r].id, daysInMonth[c]),
+        next: value,
+      });
+    });
+    applyChanges(changes);
+    recordChanges(changes);
+  };
 
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-        e.preventDefault();
-
-        if (!activeCell) return;
-
-        const baseKey = getAbsenceKey(year, month, activeCell.col + 1);
-        const current = absence[baseKey] ?? null;
-        const valueToApply = nextAbsence(current);
-
-        if (valueToApply === null) {
-          setAbsence((prev) => {
-            const next = { ...prev };
-            forEachSelectedCell((_, col) => {
-              const key = getAbsenceKey(year, month, col + 1);
-              delete next[key];
-            });
-            return next;
-          });
-          return;
-        }
-
-        setAbsence((prev) => {
-          const next = { ...prev };
-
-          forEachSelectedCell((_, col) => {
-            const key = getAbsenceKey(year, month, col + 1);
-            next[key] = valueToApply;
-          });
-
-          return next;
-        });
-      }
-    };
-
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (!e.shiftKey) {
-        setShiftKey(false);
-        // setSelection(null);
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-    };
-  }, [selection, daysInMonth, projects]);
+  // useEffect(() => {}, [selection, daysInMonth, projects]);
 
   const onFocus = (projectId: ProjectId, colIndex: number) => {
     setActiveCell({ row: projectId, col: colIndex });
-    if (!shiftKey) {
+    if (!isShiftHeld) {
       setSelection({
         start: { row: projectId, col: colIndex },
         end: { row: projectId, col: colIndex },
@@ -514,6 +487,7 @@ export const useCalendar = ({
     setActiveCell,
     setValue,
     getValue,
+    updateSelectedCellsValue,
     absence,
     setAbsence,
     rowSum,

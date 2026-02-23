@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { TailSpin } from 'react-loader-spinner';
+import { useHotkey } from '@tanstack/react-hotkeys';
 import { format } from 'date-fns';
 import { cn } from '../../utils/cn.util';
 import {
@@ -27,13 +28,13 @@ export const VerifyDaysDialog = ({
 }: VerifyDaysDialogProps) => {
   const { payzlipReportedDays, payzlipVerifiedDays, reports, verifyDays } =
     usePayzlip();
-  const [daysToVerify, setDaysToVerify] = useState<PayzlipDate[]>([]);
   const [currentSelectedRow, setCurrentSelectedRow] = useState<number>(0);
   const [processing, setProcessing] = useState<string | null>(null);
   const unverifiedDays = useMemo<PayzlipDate[]>(() => {
     if (!payzlipReportedDays?.length) return [];
     return payzlipReportedDays.filter((d) => !payzlipVerifiedDays?.includes(d));
   }, [payzlipReportedDays, payzlipVerifiedDays]);
+  const [daysToVerify, setDaysToVerify] = useState<PayzlipDate[]>([]);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -60,44 +61,44 @@ export const VerifyDaysDialog = ({
     }
   };
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!open) return;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (currentSelectedRow + 1 < unverifiedDays.length) {
-          setCurrentSelectedRow((prev) => prev + 1);
-        }
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (currentSelectedRow > 0) {
-          setCurrentSelectedRow((prev) => prev - 1);
-        }
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        console.log(unverifiedDays[currentSelectedRow]);
-        if (daysToVerify.includes(unverifiedDays[currentSelectedRow])) {
-          setDaysToVerify((prev) =>
-            prev.filter((d) => d !== unverifiedDays[currentSelectedRow]),
-          );
-        } else {
-          setDaysToVerify((prev) => [
-            ...prev,
-            unverifiedDays[currentSelectedRow],
-          ]);
-        }
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        onOpenChange(false);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        handleVerify();
+  // Keyboard shortcuts
+  useHotkey('Escape', () => onOpenChange(false), { enabled: open });
+  useHotkey('Enter', () => handleVerify(), { enabled: open });
+  useHotkey(
+    'ArrowDown',
+    () => {
+      if (currentSelectedRow + 1 < unverifiedDays.length) {
+        setCurrentSelectedRow((prev) => prev + 1);
       }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [unverifiedDays, currentSelectedRow, unverifiedDays]);
+    },
+    { enabled: open, ignoreInputs: false },
+  );
+  useHotkey(
+    'ArrowUp',
+    () => {
+      if (currentSelectedRow > 0) {
+        setCurrentSelectedRow((prev) => prev - 1);
+      }
+    },
+    { enabled: open, ignoreInputs: false },
+  );
+  useHotkey(
+    'Space',
+    () => {
+      console.log(unverifiedDays[currentSelectedRow]);
+      if (daysToVerify.includes(unverifiedDays[currentSelectedRow])) {
+        setDaysToVerify((prev) =>
+          prev.filter((d) => d !== unverifiedDays[currentSelectedRow]),
+        );
+      } else {
+        setDaysToVerify((prev) => [
+          ...prev,
+          unverifiedDays[currentSelectedRow],
+        ]);
+      }
+    },
+    { enabled: open, ignoreInputs: false },
+  );
 
   if (!open) return null;
 
@@ -134,7 +135,7 @@ export const VerifyDaysDialog = ({
                   <td className="w-4">
                     <input
                       type="checkbox"
-                      className="mt-1.5"
+                      className="mt-1.5 focus:ring-0 focus:ring-offset-0"
                       checked={daysToVerify.includes(date)}
                     />
                   </td>

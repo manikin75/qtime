@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useAtomValue } from 'jotai';
+import { useState } from 'react';
+import { useAtomValue, useAtom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 import { Layout } from '../components/Layout';
 import { Calendar } from '../components/Calendar';
 import { Button } from '../components/Button';
@@ -20,6 +21,11 @@ import { MyProjectsState } from '../states/myProjects.state';
 import { TokenState } from '../states/token.state';
 // import { type Project } from '../types/project';
 
+const ShowWelcomeDialogAtom = atomWithStorage<boolean>(
+  'showWelcomeDialog',
+  true,
+);
+
 export const TimeReport = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
@@ -28,16 +34,10 @@ export const TimeReport = () => {
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
   const [editProjectsDialogOpen, setEditProjectsDialogOpen] = useState(false);
   const [verifyDaysDialogOpen, setVerifyDaysDialogOpen] = useState(false);
-  const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
+  const [welcomeDialogOpen, setWelcomeDialogOpen] = useAtom(
+    ShowWelcomeDialogAtom,
+  );
   const token = useAtomValue(TokenState);
-
-  useEffect(() => {
-    const seenWelcome = localStorage.getItem('seenWelcome');
-    if (!seenWelcome) {
-      setWelcomeDialogOpen(true);
-      localStorage.setItem('seenWelcome', 'true');
-    }
-  }, [welcomeDialogOpen]);
 
   const changeMonth = (dir: 'left' | 'right') => {
     if (dir === 'left') {
