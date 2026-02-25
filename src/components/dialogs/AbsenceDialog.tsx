@@ -23,10 +23,10 @@ export const AbsenceDialog = ({ open, onOpenChange }: EditTokenDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="p-4">
           <DialogTitle>Absence</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 p-4">
           Absence data is stored locally in localStorage, and never sent to the
           server.
         </div>

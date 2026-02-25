@@ -20,7 +20,6 @@ import {
 import { format } from 'date-fns';
 import { MyProjectsState } from '../states/myProjects.state';
 import { TokenState } from '../states/token.state';
-// import { type Project } from '../types/project';
 
 const ShowWelcomeDialogAtom = atomWithStorage<boolean>(
   'showWelcomeDialog',

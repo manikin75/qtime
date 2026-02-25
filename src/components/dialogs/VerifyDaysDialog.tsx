@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useEffectEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { TailSpin } from 'react-loader-spinner';
 import { useHotkey } from '@tanstack/react-hotkeys';
@@ -37,9 +37,13 @@ export const VerifyDaysDialog = ({
   const [daysToVerify, setDaysToVerify] = useState<PayzlipDate[]>([]);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
+  const updateVerifiedDays = useEffectEvent(() => {
     setDaysToVerify(unverifiedDays);
     setProcessing(null);
+  });
+
+  useEffect(() => {
+    updateVerifiedDays();
   }, [unverifiedDays]);
 
   const handleCancel = () => {
