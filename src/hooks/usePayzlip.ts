@@ -20,8 +20,8 @@ import {
 import { MyProjectsState, DefaultProject } from '../states/myProjects.state';
 
 const ISO_STRING = 'YYYY-MM-DDTHH:mm:ss.SSS';
-const ORGANIZATION_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
-const USER_ID = '4bde0415-bf48-4e0d-a83b-b880d3aa3163';
+const ORGANIZATION_ID = import.meta.env.VITE_ORGANIZATION_ID;
+const USER_ID = import.meta.env.VITE_USER_ID;
 
 export const usePayzlip = () => {
   const refreshToken = useAtomValue(TokenState);

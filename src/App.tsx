@@ -9,6 +9,8 @@ import './dist.css';
 const queryClient = new QueryClient();
 
 function App() {
+  console.log(import.meta.env.VITE_CLIENT_ID);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

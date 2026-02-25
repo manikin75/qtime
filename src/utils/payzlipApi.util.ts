@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 const API_ROOT = 'https://api.payzlip.se';
-const CLIENT_ID = '5jofr8lhuof52fjs87m911k70e';
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
 
 const refreshAccessToken = async (refreshToken: string): Promise<string> => {
   const res = await fetch(API_ROOT + '/v1/auth/refresh', {
