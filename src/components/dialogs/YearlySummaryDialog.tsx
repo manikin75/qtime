@@ -49,7 +49,7 @@ export const YearlySummaryDialog = ({
   open,
   onOpenChange,
 }: YearlySummaryDialogProps) => {
-  const { nationalHolidays, values } = useYearlySummary({ year });
+  const { nationalHolidays } = useYearlySummary({ year });
 
   const holidaySet = useMemo(
     () => new Set(nationalHolidays.map((h) => h.date)),
@@ -108,7 +108,7 @@ export const YearlySummaryDialog = ({
 
     if (holidaySet.has(key)) return 'bg-red-700';
 
-    const worked = values?.[key];
+    const worked = false; //values?.[key];
 
     if (!worked) return 'bg-stone-600';
 
